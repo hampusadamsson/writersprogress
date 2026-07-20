@@ -23,7 +23,7 @@ COPY --from=builder /usr/local/bin/pnpm /usr/local/bin/pnpm
 COPY --from=builder /usr/local/lib/node_modules /usr/local/lib/node_modules
 
 # Placeholder page - replaced by first extract at runtime
-RUN echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BookProgress</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0d1117;color:#e6edf3}</style></head><body><div style="text-align:center"><h1>📚 BookProgress</h1><p>Dashboard loading soon&hellip;</p></div></body></html>' > /usr/share/nginx/html/index.html
+RUN echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27><rect width=%2716%27 height=%2716%27 rx=%273%27 fill=%27%23161b22%27/><text x=%278%27 y=%2712%27 text-anchor=%27middle%27 font-size=%2711%27 fill=%27%2358a6ff%27>W</text></svg>"><title>Writing Tracker</title><style>body{font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0d1117;color:#e6edf3}div{text-align:center}h1{font-size:1.5rem;font-weight:600;margin-bottom:8px}p{color:#8b949e;font-size:0.9rem}</style></head><body><div><h1>Writing Tracker</h1><p>Dashboard will appear after first extract completes.</p></div></body></html>' > /usr/share/nginx/html/index.html
 
 # Entrypoint
 COPY docker-entrypoint.sh /entrypoint.sh

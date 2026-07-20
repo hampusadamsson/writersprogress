@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23161b22'/><text x='8' y='12' text-anchor='middle' font-size='11' fill='%2358a6ff'>W</text></svg>">
 <title>Writing Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
@@ -125,9 +126,6 @@
   .hero-bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
   .hero-bar-fill { height: 100%; background: linear-gradient(90deg, #3fb950, #58a6ff); border-radius: 4px; transition: width 0.5s; }
   .hero-bar-pct { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
-  .hero-stats { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-muted); }
-  .hero-stats span { white-space: nowrap; }
-  .hero-stats i { font-style: normal; opacity: 0.6; }
 
   /* Tabs */
   .tabs { display: flex; gap: 2px; margin: 16px 0; border-bottom: 2px solid var(--border); }
@@ -136,8 +134,6 @@
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   /* Metric strip */
-  .metric-strip { display: flex; gap: 14px; flex-wrap: wrap; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 4px; font-size: 0.78rem; color: var(--text-muted); align-items: center; position: relative; }
-  .metric-strip span { white-space: nowrap; }
   .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 1px; vertical-align: middle; background: var(--text-muted); }
   .dot-g { background: var(--green); }
   .dot-o { background: var(--orange); }
@@ -150,9 +146,7 @@
     .top-bar { gap: 8px; }
     .hero { padding: 16px; }
     .hero-count { font-size: 1.8rem; }
-    .hero-stats { gap: 10px; font-size: 0.7rem; }
     .tab { padding: 6px 14px; font-size: 0.78rem; }
-    .metric-strip { gap: 8px; font-size: 0.7rem; padding: 8px 12px; }
     .stats { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
     .stat-card { padding: 12px; }
     .stat-value { font-size: 1.35rem; }
@@ -176,9 +170,9 @@
 <body>
 
 <div class="top-bar">
-  <h1>📚 Writing Tracker</h1>
+  <h1>Writing Tracker</h1>
   <div style="display:flex;gap:8px;">
-    <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
+    <button class="btn" onclick="toggleSettings()">Settings</button>
   </div>
 </div>
 
@@ -251,7 +245,7 @@ function buildHTML() {
   <div class="hero">
     <div class="hero-main">
       <div class="hero-count">${fmt(totalWords)}</div>
-      <div class="hero-label">words written${isAll ? '' : ' · ' + activeSection}</div>
+      <div class="hero-label">words written${isAll ? '' : ' · ' + activeSection} <span style="color:var(--text-muted);font-size:0.75rem;">~${Math.round(totalWords / 250)} pages</span></div>
     </div>
     <div class="hero-bar-wrap">
       <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>
@@ -261,10 +255,10 @@ function buildHTML() {
 
   <!-- Stats bar -->
   <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;font-size:0.85rem;align-items:center;justify-content:space-around;">
-    <span style="color:var(--accent);font-weight:600;">${estFinish.paced || '—'}</span> <span style="color:var(--text-muted);font-size:0.75rem;">at pace</span>
-    <span style="color:var(--green);font-weight:600;">${estFinish.onTrack || '—'}</span> <span style="color:var(--text-muted);font-size:0.75rem;">on track</span>
-    <span style="color:var(--orange);font-weight:600;">${fmt(dailyAvg)}</span> <span style="color:var(--text-muted);font-size:0.75rem;">avg/day</span>
-    <span style="color:var(--text);font-weight:600;">${days.length}</span> <span style="color:var(--text-muted);font-size:0.75rem;">days writing</span>
+    <div style="text-align:center;"><div style="color:var(--accent);font-weight:600;font-size:1.1rem;">${estFinish.paced || '—'}</div><div style="color:var(--text-muted);font-size:0.7rem;">at pace</div></div>
+    <div style="text-align:center;"><div style="color:var(--green);font-weight:600;font-size:1.1rem;">${estFinish.onTrack || '—'}</div><div style="color:var(--text-muted);font-size:0.7rem;">on track</div></div>
+    <div style="text-align:center;"><div style="color:var(--orange);font-weight:600;font-size:1.1rem;">${fmt(dailyAvg)}</div><div style="color:var(--text-muted);font-size:0.7rem;">avg/day</div></div>
+    <div style="text-align:center;"><div style="color:var(--text);font-weight:600;font-size:1.1rem;">${days.length}</div><div style="color:var(--text-muted);font-size:0.7rem;">days writing</div></div>
   </div>
 
   <!-- Section cards -->
@@ -275,7 +269,7 @@ function buildHTML() {
       return `
     <div class="stat-card" style="cursor:pointer;border-left:3px solid ${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.45};transition:opacity 0.2s;" onclick="switchSection('${name}')">
       <div class="stat-value" style="font-size:1.35rem;">${fmt(info.words)}</div>
-      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files</span></div>
+      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files · ~${Math.round(info.words / 250)}p</span></div>
     </div>`;
     }).join('')}
   </div>
@@ -331,6 +325,17 @@ function buildHTML() {
   `;
 }
 
+function paginate(entries, rowFn, id, cols) {
+  const limit = 25;
+  const rows = entries.map(rowFn).join('');
+  if (entries.length <= limit) return `<tbody>${rows}</tbody>`;
+  const visible = entries.slice(0, limit).map(rowFn).join('');
+  const hidden = entries.slice(limit).map(rowFn).join('');
+  return `<tbody>${visible}</tbody>
+    <tbody id="${id}-more" style="display:none;">${hidden}</tbody>
+    <tbody id="${id}-btn"><tr><td colspan="${cols}" style="text-align:center;"><button class="btn" onclick="document.getElementById('${id}-more').style.display='';document.getElementById('${id}-btn').style.display='none';">Show all (${entries.length})</button></td></tr></tbody>`;
+}
+
 function buildFileTable() {
   // Collect all files across all days, deduped
   const fileMap = new Map();
@@ -352,8 +357,7 @@ function buildFileTable() {
     <div style="overflow-x:auto;">
     <table class="detail-table">
       <thead><tr><th>File</th><th>Section</th><th class="num">Added</th><th class="num">Removed</th><th class="num">Net</th></tr></thead>
-      <tbody>
-        ${files.map(f => `
+      ${paginate(files, f => `
           <tr style="cursor:pointer;${f.deleted ? 'opacity:0.4' : ''}" onclick="switchFile('${f.path.replace(/'/g, "\\'")}')">
             <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${f.deleted ? 'text-decoration:line-through' : ''}" title="${f.path}${f.deleted ? ' (deleted)' : ''}">${f.path}</td>
             <td>${f.section}${f.deleted ? ' 🗑' : ''}</td>
@@ -361,8 +365,7 @@ function buildFileTable() {
             <td class="num" style="color:var(--red)">−${fmt(f.removed)}</td>
             <td class="num">${f.deleted ? '<span style="color:var(--text-muted)">deleted</span>' : fmt(f.added - f.removed)}</td>
           </tr>
-        `).join('')}
-      </tbody>
+        `, 'filelist', 5)}
     </table>
     </div>`;
 }
@@ -695,54 +698,49 @@ const CHART_TIPS = {
   daily: {
     title: 'Daily Words',
     desc: 'Words added (green) and removed (red) per day. Each bar = one day of writing. Deleted files excluded from net count but still shown for historical context.',
-    axes: '<b>Y:</b> word count · <b>X:</b> date',
+    bench: 'Stephen King writes 2,000 words/day · Hemingway 500 · Trollope 250 words/15min · NaNoWriMo pace 1,667/day',
   },
   cumulative: {
     title: 'Cumulative Progress',
-    desc: 'Total words over time. The blue line is your actual word count. Dashed yellow = total goal. Dashed green = pace needed to hit daily goal. If blue stays above green, you\'re on track.',
-    axes: '<b>Y:</b> total words · <b>X:</b> date',
+    desc: 'Total words over time. Blue line = actual word count. Dashed yellow = total goal. Dashed green = pace to hit daily goal. Blue above green = on track.',
+    bench: 'The Great Gatsby ~47,000 words · Fight Club ~50,000 · Harry Potter 1 ~77,000 · Average novel 80,000–100,000',
   },
   style: {
     title: 'Writing Style',
-    desc: 'Tracks sentence length and readability over time. Left Y-axis: words per sentence (blue) and LIX score (yellow). Right Y-axis: percentages for dialogue, passive voice, and adverb density.',
-    axes: '<b>Left Y:</b> words / score · <b>Right Y:</b> % / per 1000w · <b>X:</b> date',
+    desc: 'Tracks sentence length and readability over time. Left Y-axis: words per sentence (blue) and LIX score (yellow). Right Y-axis: dialogue %, passive voice, and adverb density.',
+    bench: 'Hemingway avg 10 words/sentence · Rowling 12 · Faulkner 40+ · LIX: Harry Potter 25 · Newspapers 45 · Academic 55+',
   },
   hours: {
     title: 'Writing Schedule',
-    desc: 'When commits happen by hour of day. Green bars = hours with commits. Empty gray bars = no activity. Helps identify your most productive writing times.',
-    axes: '<b>Y:</b> commit count · <b>X:</b> hour of day (24h)',
+    desc: 'When commits happen by hour of day. Green bars = hours with commits. Helps identify your most productive writing times.',
+    bench: 'Morning writers: Hemingway (dawn) · Night writers: Kafka (late night) · Afternoon: Trollope (5:30am–8am before work)',
   },
   vocab: {
     title: 'Vocabulary Richness',
-    desc: 'TTR (blue) = unique words ÷ total words. Honoré\'s R (green) = lexical density robust to text length. Top-100 word % (dashed yellow) = how much of text is common words. Higher TTR = richer vocabulary.',
-    axes: '<b>Left Y:</b> TTR · <b>Right Y:</b> score / % · <b>X:</b> date',
+    desc: 'TTR (blue) = unique words ÷ total words. Honoré R (green) = lexical density robust to text length. Top-100 word % (dashed yellow) = common word ratio.',
+    bench: 'Shakespeare TTR 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
   },
   sentiment: {
     title: 'Sentiment Trend',
-    desc: 'Emotional tone over time. Positive = bright/hopeful scenes. Negative = dark/conflict scenes. Polarity = (positive − negative) ÷ total sentiment words × 100. Range −100 to +100.',
-    axes: '<b>Y:</b> sentiment polarity · <b>X:</b> date',
-  },
-  characters: {
-    title: 'Character Mentions',
-    desc: 'Top characters by [[WikiLink]] mention count across all files. Shows who dominates the narrative. Click section tabs above to filter.',
-    axes: '<b>X:</b> mention count · <b>Y:</b> character name',
+    desc: 'Emotional tone over time. Positive = bright/hopeful scenes. Negative = dark/conflict scenes. Polarity range −100 to +100.',
+    bench: 'Tragedies −50 to −20 · Thrillers −10 to +10 · Comedies +20 to +50 · Neutral 0',
   },
   fileDaily: {
     title: 'Daily Words',
     desc: 'Words added and removed for this specific file only. Each bar = one day where this file was modified.',
-    axes: '<b>Y:</b> word count · <b>X:</b> date',
+    bench: 'Average chapter 2,000–5,000 words · Scene 1,000–2,000 · Short story 1,000–7,500',
   },
   fileCum: {
     title: 'Cumulative',
     desc: 'Total words in this file over time. Track growth of individual chapters or character sheets.',
-    axes: '<b>Y:</b> total words · <b>X:</b> date',
+    bench: 'Chapter target typically 2,000–5,000 words · Novella 20,000–40,000 · Novel 50,000+ ',
   },
 }
 
 function chartTip(key) {
   const c = CHART_TIPS[key]
   if (!c) return ''
-  return `<span class="has-tip" style="display:inline-block;margin-left:6px;font-size:0.8rem;color:var(--text-muted);cursor:help;vertical-align:middle;">ⓘ<span class="tip"><b>${c.title}</b><br>${c.desc}<br><br>${c.axes}</span></span>`
+  return `<span class="has-tip" style="display:inline-block;margin-left:6px;font-size:0.8rem;color:var(--text-muted);cursor:help;vertical-align:middle;">ⓘ<span class="tip"><b>${c.title}</b><br>${c.desc}<div class="bench"><b>Benchmarks:</b><br>${c.bench.replace(/ · /g, '<br>')}</div></span></span>`
 }
 
 // ── Metric tooltip info ──
@@ -1140,19 +1138,18 @@ function buildChapterTable() {
   <h2>Chapter Word Counts</h2>
   <div style="overflow-x:auto;">
   <table class="detail-table" style="margin-bottom:24px;">
-    <thead><tr><th>Chapter</th><th class="num">Words</th><th class="num">Progress</th></tr></thead>
-    <tbody>
-      ${entries.map(([path, wc]) => {
+    <thead><tr><th>Chapter</th><th class="num">Words</th><th class="num">Pages</th><th class="num">Progress</th></tr></thead>
+    ${paginate(entries, ([path, wc]) => {
         const name = path.split('/').pop().replace('.md','');
         const pct = Math.round(wc / (progress.chapterTargetWords || 2500) * 100);
         return `
         <tr style="cursor:pointer;" onclick="switchFile('${path.replace(/'/g, "\\'")}')">
           <td>${name}</td>
           <td class="num">${fmt(wc)}</td>
+          <td class="num" style="color:var(--text-muted);">~${Math.round(wc / 250)}</td>
           <td class="num"><span style="display:inline-block;width:100px;height:6px;background:#21262d;border-radius:3px;vertical-align:middle;"><span style="display:block;height:100%;width:${Math.min(pct,100)}%;background:${pct>=100?'#3fb950':'#58a6ff'};border-radius:3px;"></span></span> ${pct}%</td>
         </tr>`;
-      }).join('')}
-    </tbody>
+      }, 'chapterlist', 4)}
   </table>
   </div>`;
 }
@@ -1211,19 +1208,6 @@ function toggleSettings() {
 
 // ── Helpers ──
 function fmt(n) { return n.toLocaleString(); }
-
-function calcStreak(days) {
-  if (!days.length) return 0;
-  let streak = 1;
-  for (let i = days.length - 1; i > 0; i--) {
-    const prev = new Date(days[i-1].date);
-    const curr = new Date(days[i].date);
-    const diff = (curr - prev) / 86400000;
-    if (diff <= 1.5) streak++;
-    else break;
-  }
-  return streak;
-}
 
 function estimateFinish(days, goalTarget) {
   if (!days.length) return { paced: null, onTrack: null }

@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "📚 BookProgress container starting..."
+echo "Writing Tracker container starting..."
 echo "   Extract interval: ${EXTRACT_INTERVAL}s"
 echo "   Config: ${CONFIG_PATH}"
 

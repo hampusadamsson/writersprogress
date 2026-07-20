@@ -100,7 +100,7 @@ Hover any metric for explanation, formula, and famous book benchmarks:
 - Click any file/chapter row to see per-file stats and word history
 
 ### Settings
-⚙️ button shows all current config values and thresholds. Edit `bookprogress.config.json` to change them.
+Settings button shows all current config values and thresholds. Edit `bookprogress.config.json` to change them.
 
 ### Mobile
 Responsive layout — single-column charts, scrolling tables, viewport-aware tooltips.

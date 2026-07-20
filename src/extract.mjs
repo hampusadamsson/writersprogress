@@ -8,7 +8,7 @@ const OUTPUT_HTML = resolve('data/index.html')
 const TEMPLATE = resolve('index.html')
 const FALLBACK_TEMPLATE = resolve('src/template.html')
 
-const HELP = `📚 BookProgress — track your book's progress through git history
+const HELP = `Writing Tracker — track your writing progress through git history
 
 Usage:
   pnpm extract [options]
@@ -83,7 +83,7 @@ async function main() {
     return
   }
 
-  console.log('📚 BookProgress — extracting git history...\n')
+  console.log('Writing Tracker — extracting git history...\n')
 
   const config = await loadConfig(opts.configPath)
   console.log(`  Config:      ${opts.configPath}`)
@@ -114,7 +114,7 @@ async function main() {
     await generateHtml(report)
   }
 
-  console.log('\n✅ Done.')
+  console.log('\nDone.')
   if (!opts.jsonOnly) {
     console.log('   Open data/index.html in your browser.')
   }
@@ -127,7 +127,7 @@ async function generateHtml(report) {
       const raw = await readFile(OUTPUT_JSON, 'utf-8')
       report = JSON.parse(raw)
     } catch {
-      console.error('❌ No data/progress.json found. Run without --html-only first.')
+      console.error('No data/progress.json found. Run without --html-only first.')
       process.exit(1)
     }
   }
@@ -147,7 +147,7 @@ async function generateHtml(report) {
 }
 
 main().catch((err) => {
-  console.error('❌ Extraction failed:', err.message)
+  console.error('Extraction failed:', err.message)
   console.error('   Run with --help for usage information.')
   process.exit(1)
 })
