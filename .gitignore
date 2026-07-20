@@ -1,0 +1,6 @@
+node_modules/
+data/
+/.pnpm-store/v11
+/Ruindykarna
+/index.html
+/k8s

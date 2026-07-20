@@ -1,0 +1,18 @@
+{
+  "bookFolder": "./Ruindykarna",
+  "dailyWordGoal": 500,
+  "totalWordGoal": 80000,
+  "chapterTargetWords": 2500,
+  "textAnalysisSection": "Manuscript",
+  "trackPatterns": ["**/*.md"],
+  "excludePatterns": ["templates/**", "**/.gitkeep", "**/*.base", "**/.sync-conflict*"],
+  "thresholds": {
+    "adverbRatio": { "good": 5, "warn": 10 },
+    "passiveRatio": { "good": 2, "warn": 5 },
+    "ttr": { "good": 50, "warn": 35 },
+    "lix": { "goodMin": 30, "goodMax": 50, "warnMin": 25, "warnMax": 60 },
+    "sentenceLengthAvg": { "goodMin": 10, "goodMax": 20, "warnMin": 5, "warnMax": 30 },
+    "dialogueRatio": { "goodMin": 30, "goodMax": 70, "warnMin": 15, "warnMax": 85 },
+    "topWordFreq": { "good": 50, "warn": 65 }
+  }
+}

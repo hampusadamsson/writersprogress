@@ -1,0 +1,20 @@
+{
+  "name": "bookprogress",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "extract": "node src/extract.mjs",
+    "help": "node src/extract.mjs --help",
+    "test": "node --test src/*.test.mjs",
+    "lint": "biome check src/",
+    "format": "biome format --write src/"
+  },
+  "dependencies": {
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.8"
+  },
+  "packageManager": "pnpm@11.9.0+sha512.74160a1a2f70be7a9e6a2cbcf5bea5cf14984332d2970bb0efbe2028781be60e32178968701929b634f8ee5d202cde5a348dc131341fd1e10a2ae5ee03bad05e"
+}
