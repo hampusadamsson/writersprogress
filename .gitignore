@@ -1,5 +1,7 @@
 node_modules/
-data/
+data/progress.html
 /.pnpm-store/v11
 /Ruindykarna
+/index.html
 /k8s
+/data/progress.json
