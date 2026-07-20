@@ -29,7 +29,7 @@ RUN echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name=
 COPY docker-entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-ENV EXTRACT_INTERVAL=3600
+ENV EXTRACT_INTERVAL=86400
 ENV CONFIG_PATH=/app/bookprogress.config.json
 
 EXPOSE 80

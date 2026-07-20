@@ -11,18 +11,22 @@ NGINX_PID=$!
 
 # Cron loop: periodically re-extract
 extract_loop() {
+  run_extract
   while true; do
-    sleep "${EXTRACT_INTERVAL:-3600}"
-    echo "[$(date -Iseconds)] Running scheduled extract..."
-    cd /app
-    if node src/extract.mjs --config "${CONFIG_PATH:-/app/bookprogress.config.json}" 2>&1; then
-      # Copy fresh dashboard to nginx
-      cp /app/data/index.html /usr/share/nginx/html/index.html
-      echo "[$(date -Iseconds)] Extract complete."
-    else
-      echo "[$(date -Iseconds)] Extract failed, keeping previous dashboard."
-    fi
+    sleep "${EXTRACT_INTERVAL:-86400}"
+    run_extract
   done
+}
+
+run_extract() {
+  echo "[$(date -Iseconds)] Running extract..."
+  cd /app
+  if node src/extract.mjs --config "${CONFIG_PATH:-/app/bookprogress.config.json}" 2>&1; then
+    cp /app/data/index.html /usr/share/nginx/html/index.html
+    echo "[$(date -Iseconds)] Extract complete."
+  else
+    echo "[$(date -Iseconds)] Extract failed, keeping previous dashboard."
+  fi
 }
 
 extract_loop &

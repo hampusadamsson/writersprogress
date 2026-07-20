@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BookProgress</title>
+<title>Writing Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root {
@@ -176,7 +176,7 @@
 <body>
 
 <div class="top-bar">
-  <h1>📚 BookProgress</h1>
+  <h1>📚 Writing Tracker</h1>
   <div style="display:flex;gap:8px;">
     <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
   </div>
@@ -257,12 +257,14 @@ function buildHTML() {
       <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>
       <div class="hero-bar-pct">${pct}% of ${fmt(goalTarget)}</div>
     </div>
-    <div class="hero-stats">
-      <span>⏳ ${estFinish.paced || '—'} <i>at pace</i></span>
-      <span>🎯 ${estFinish.onTrack || '—'} <i>on track</i></span>
-      <span>📊 ${fmt(dailyAvg)} <i>avg/day</i></span>
-      <span>🔥 ${calcStreak(days)} <i>day streak</i></span>
-    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;font-size:0.8rem;color:var(--text-muted);align-items:center;justify-content:space-around;">
+    <span>${estFinish.paced || '—'} <i style="opacity:0.6">at pace</i></span>
+    <span>${estFinish.onTrack || '—'} <i style="opacity:0.6">on track</i></span>
+    <span>${fmt(dailyAvg)} <i style="opacity:0.6">avg/day</i></span>
+    <span>${days.length} <i style="opacity:0.6">days writing</i></span>
   </div>
 
   <!-- Section cards -->
@@ -439,32 +441,32 @@ function buildFileDetail() {
     </div>
     ${stats ? `
     <div class="stat-card has-tip ${metricColor(stats.sentenceLengthAvg, t.sentenceLengthAvg)}">
-      <div class="stat-value">${stats.sentenceLengthAvg}</div>
+      <div class="stat-value">${Math.round(stats.sentenceLengthAvg)}</div>
       <div class="stat-label">Sentence Length</div>
       ${tip('sentenceLengthAvg', stats.sentenceLengthAvg)}
     </div>
     <div class="stat-card has-tip ${metricColor(stats.lix, t.lix)}">
-      <div class="stat-value">${stats.lix}</div>
+      <div class="stat-value">${Math.round(stats.lix)}</div>
       <div class="stat-label">LIX</div>
       ${tip('lix', stats.lix)}
     </div>
     <div class="stat-card has-tip ${metricColor(stats.dialogueRatio, t.dialogueRatio)}">
-      <div class="stat-value">${stats.dialogueRatio}%</div>
+      <div class="stat-value">${Math.round(stats.dialogueRatio)}%</div>
       <div class="stat-label">Dialogue</div>
       ${tip('dialogueRatio', stats.dialogueRatio)}
     </div>
     <div class="stat-card has-tip ${metricColor(stats.passiveRatio, t.passiveRatio)}">
-      <div class="stat-value">${stats.passiveRatio}</div>
+      <div class="stat-value">${Math.round(stats.passiveRatio)}</div>
       <div class="stat-label">Passive /1000w</div>
       ${tip('passiveRatio', stats.passiveRatio)}
     </div>
     <div class="stat-card has-tip ${metricColor(stats.adverbRatio, t.adverbRatio)}">
-      <div class="stat-value">${stats.adverbRatio}</div>
+      <div class="stat-value">${Math.round(stats.adverbRatio)}</div>
       <div class="stat-label">Adverbs /1000w</div>
       ${tip('adverbRatio', stats.adverbRatio)}
     </div>
     <div class="stat-card has-tip ${metricColorInv(stats.ttr, t.ttr)}">
-      <div class="stat-value">${stats.ttr}</div>
+      <div class="stat-value">${Math.round(stats.ttr)}</div>
       <div class="stat-label">TTR</div>
       ${tip('ttr', stats.ttr)}
     </div>
@@ -864,16 +866,15 @@ function buildMetricStrip() {
   const colorFn = (key, value) => key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
 
   return `
-  <h2 style="margin-bottom:4px;">${activeSection === 'all' ? 'Manuscript' : activeSection} Metrics</h2>
   <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
     ${cards.map(c => `
     <div class="stat-card has-tip ${colorFn(c.key, c.value)}" style="padding:10px 14px;">
-      <div class="stat-value" style="font-size:1.25rem;">${c.value}${c.suffix}</div>
+      <div class="stat-value" style="font-size:1.25rem;">${Math.round(c.value)}${c.suffix}</div>
       <div class="stat-label" style="font-size:0.7rem;">${c.label}</div>
       ${tip(c.key, c.value)}
     </div>`).join('')}
     <div class="stat-card has-tip" style="padding:10px 14px;">
-      <div class="stat-value" style="font-size:1.25rem;">${progress.editRatio}%</div>
+      <div class="stat-value" style="font-size:1.25rem;">${Math.round(progress.editRatio)}%</div>
       <div class="stat-label" style="font-size:0.7rem;">Edit Ratio</div>
       ${tip('editRatio', progress.editRatio)}
     </div>

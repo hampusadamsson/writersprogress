@@ -200,7 +200,7 @@ export async function buildReport(cwd, config) {
   // Walk days in reverse to get latest version of each file
   for (let i = days.length - 1; i >= 0; i--) {
     for (const f of days[i].files) {
-      if (f.section !== config.textAnalysisSection || seenPaths.has(f.path)) continue
+      if (f.section !== config.textAnalysisSection || seenPaths.has(f.path) || f.deleted) continue
       seenPaths.add(f.path)
       if (f.textStats) {
         chapterWordCounts[f.path] = f.textStats.wordCount

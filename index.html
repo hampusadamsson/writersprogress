@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BookProgress</title>
+<title>Writing Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root {
@@ -176,7 +176,7 @@
 <body>
 
 <div class="top-bar">
-  <h1>📚 BookProgress</h1>
+  <h1>📚 Writing Tracker</h1>
   <div style="display:flex;gap:8px;">
     <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
   </div>
@@ -257,12 +257,14 @@ function buildHTML() {
       <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>
       <div class="hero-bar-pct">${pct}% of ${fmt(goalTarget)}</div>
     </div>
-    <div class="hero-stats">
-      <span>⏳ ${estFinish.paced || '—'} <i>at pace</i></span>
-      <span>🎯 ${estFinish.onTrack || '—'} <i>on track</i></span>
-      <span>📊 ${fmt(dailyAvg)} <i>avg/day</i></span>
-      <span>🔥 ${calcStreak(days)} <i>day streak</i></span>
-    </div>
+  </div>
+
+  <!-- Stats bar -->
+  <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;font-size:0.85rem;align-items:center;justify-content:space-around;">
+    <span style="color:var(--accent);font-weight:600;">${estFinish.paced || '—'}</span> <span style="color:var(--text-muted);font-size:0.75rem;">at pace</span>
+    <span style="color:var(--green);font-weight:600;">${estFinish.onTrack || '—'}</span> <span style="color:var(--text-muted);font-size:0.75rem;">on track</span>
+    <span style="color:var(--orange);font-weight:600;">${fmt(dailyAvg)}</span> <span style="color:var(--text-muted);font-size:0.75rem;">avg/day</span>
+    <span style="color:var(--text);font-weight:600;">${days.length}</span> <span style="color:var(--text-muted);font-size:0.75rem;">days writing</span>
   </div>
 
   <!-- Section cards -->
@@ -864,7 +866,6 @@ function buildMetricStrip() {
   const colorFn = (key, value) => key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
 
   return `
-  <h2 style="margin-bottom:4px;">${activeSection === 'all' ? 'Manuscript' : activeSection} Metrics</h2>
   <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
     ${cards.map(c => `
     <div class="stat-card has-tip ${colorFn(c.key, c.value)}" style="padding:10px 14px;">
