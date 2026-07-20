@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookProgress</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --red: #f85149;
+    --orange: #d2991d;
+    --radius: 8px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
+  h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
+  .top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
+  }
+  .btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 0.85rem;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+  }
+  .stat-value { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; }
+  .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
+  .stat-card.green .stat-value { color: var(--green); }
+  .stat-card.orange .stat-value { color: var(--orange); }
+  .stat-card.red .stat-value { color: var(--red); }
+  .charts {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 16px; margin-bottom: 24px;
+  }
+  @media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
+  .chart-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+  }
+  .chart-box canvas { width: 100% !important; max-height: 300px; }
+  .section-bar {
+    display: flex; gap: 4px; margin-bottom: 24px; height: 8px; border-radius: 4px; overflow: hidden;
+  }
+  .section-bar span { height: 100%; border-radius: 0; }
+  .detail-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  .detail-table th { text-align: left; color: var(--text-muted); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  .detail-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
+  .detail-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .detail-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .drilldown { margin-bottom: 24px; }
+  .section-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
+  .section-tab {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
+    padding: 4px 12px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem;
+  }
+  .section-tab.active { border-color: var(--accent); color: var(--accent); }
+  .tip {
+    position: absolute; z-index: 100; background: var(--surface); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 12px; border-radius: var(--radius); font-size: 0.75rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none;
+    max-width: 280px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;
+  }
+  .has-tip { cursor: help; }
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    background: var(--accent); color: white; padding: 8px 16px; border-radius: 20px;
+    font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+  }
+  .toast.show { opacity: 1; }
+  .c-green { color: var(--green); }
+  .c-orange { color: var(--orange); }
+  .c-red { color: var(--red); }
+</style>
+</head>
+<body>
+  <div class="top-bar">
+    <h1>📚 BookProgress</h1>
+    <div style="display:flex; gap:8px;">
+      <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <div id="settings-panel" class="chart-box" style="display:none; margin-bottom:24px;">
+    <h2>Settings</h2>
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:0.85rem;">
+      <div>
+        <label>Daily Goal: <input type="number" id="set-daily" step="100"></label>
+      </div>
+      <div>
+        <label>Total Goal: <input type="number" id="set-total" step="1000"></label>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:12px;" onclick="saveSettings()">Save & Refresh</button>
+  </div>
+
+  <div class="stats" id="stats-grid"></div>
+  <div class="charts" id="charts-grid"></div>
+  <div id="app"></div>
+  <div id="toast" class="toast"></div>
+
+  <script>
+    // __PROGRESS_JSON__
+    
+    const state = {
+      progress: __PROGRESS_JSON__,
+      activeTab: 'all',
+      selectedFile: null,
+    }
+
+    function toggleSettings() {
+      const p = document.getElementById('settings-panel');
+      p.style.display = p.style.display === 'none' ? 'block' : 'none';
+      if (p.style.display === 'block') {
+        document.getElementById('set-daily').value = state.progress.dailyGoal || 0;
+        document.getElementById('set-total').value = state.progress.totalWordGoal || 0;
+      }
+    }
+
+    function saveSettings() {
+      const daily = parseInt(document.getElementById('set-daily').value);
+      const total = parseInt(document.getElementById('set-total').value);
+      if (!isNaN(daily)) state.progress.dailyGoal = daily;
+      if (!isNaN(total)) state.progress.totalWordGoal = total;
+      showToast('Settings saved locally');
+      refresh();
+    }
+
+    function refresh() {
+      const p = state.progress;
+      if (!p) {
+        document.getElementById('app').innerHTML = '<div class="error-state"><p>No data yet. Run <code>pnpm extract</code>.</p></div>';
+        return;
+      }
+
+      // 1. Header Stats
+      const statsGrid = document.getElementById('stats-grid');
+      statsGrid.innerHTML = '';
+      const cards = [
+        { label: 'Total Words', val: p.totalWords, color: p.totalWords >= p.totalWordGoal ? 'green' : '' },
+        { label: 'Days Active', val: p.days.length, color: '' },
+        { label: 'Avg/Day', val: Math.round(p.totalWords / (p.days.length || 1)), color: '' },
+        { label: 'Edit Ratio', val: p.editRatio !== undefined ? p.editRatio + '%' : '—', color: '' },
+      ];
+      cards.forEach(c => {
+        statsGrid.innerHTML += `<div class="stat-card ${c.color}"><div class="stat-value">${c.val}</div><div class="stat-label">${c.label}</div></div>`;
+      });
+
+      // 2. Main Charts
+      const chartsGrid = document.getElementById('charts-grid');
+      chartsGrid.innerHTML = '<div class="chart-box"><h2>Daily Word Count</h2><canvas id="chart-daily"></canvas></div><div class="chart-box"><h2>Cumulative Words</h2><canvas id="chart-cumul"></canvas></div>';
+      
+      new Chart(document.getElementById('chart-daily'), {
+        type: 'bar',
+        data: {
+          labels: p.days.map(d => d.date),
+          datasets: [{ label: 'Words', data: p.days.map(d => d.words), backgroundColor: '#58a6ff' }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, x: { grid: { display: false }, ticks: { color: '#8b949e' } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      new Chart(document.getElementById('chart-cumul'), {
+        type: 'line',
+        data: {
+          labels: p.days.map(d => d.date),
+          datasets: [{ label: 'Words', data: p.days.map(d => d.totalWords), borderColor: '#3fb950', fill: true, backgroundColor: 'rgba(63,185,80,0.1)', tension: 0.1 }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, x: { grid: { display: false }, ticks: { color: '#8b949e' } } },
+          plugins: { legend: { display: false } }
+        }
+      });
+
+      // 3. Detail Section
+      const app = document.getElementById('app');
+      app.innerHTML = '';
+
+      // Finish estimate
+      if (p.estimatedFinish) {
+        const est = p.estimatedFinish;
+        app.innerHTML += `<div class="chart-box" style="margin-bottom:24px;">
+          <h2>Estimated Finish</h2>
+          <div style="display:flex; gap:24px; align-items:center;">
+            <div><div class="stat-label">By Current Pace</div><div class="stat-value">${est.paced || '—'}</div></div>
+            <div><div class="stat-label">By Daily Goal</div><div class="stat-value">${est.onTrack || '—'}</div></div>
+          </div>
+        </div>`;
+      }
+
+      // File Breakdown
+      app.innerHTML += `<h2>Files <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted);">— click for per-file metrics</span></h2>`;
+      const table = document.createElement('table');
+      table.className = 'detail-table';
+      table.innerHTML = `<thead><tr><th>File</th><th class="num">Words</th><th class="num">%</th></tr></thead>`;
+      const tbody = document.createElement('tbody');
+      
+      Object.entries(p.files).sort((a, b) => b[1].words - a[1].words).forEach(([path, data]) => {
+        const pct = ((data.words / p.totalWords) * 100).toFixed(1);
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.innerHTML = `<td>${path}</td><td class="num">${fmt(data.words)}</td><td class="num">${pct}%</td>`;
+        tr.onclick = () => showFileDrilldown(path);
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+      app.appendChild(table);
+    }
+
+    function showFileDrilldown(path) {
+      const data = state.progress.files[path];
+      const app = document.getElementById('app');
+      
+      const drilldown = document.createElement('div');
+      drilldown.className = 'drilldown';
+      drilldown.innerHTML = `
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+          <button class="btn" onclick="refresh()">← Back</button>
+          <h2 style="margin:0;">${path}</h2>
+        </div>
+        <div class="stats">
+          <div class="stat-card"><div class="stat-value">${fmt(data.words)}</div><div class="stat-label">Total Words</div></div>
+          <div class="stat-card"><div class="stat-value">${fmt(data.commits)}</div><div class="stat-label">Commits</div></div>
+          <div class="stat-card"><div class="stat-value">${Math.round(data.words / (data.commits || 1))}</div><div class="stat-label">Avg/Commit</div></div>
+        </div>
+      `;
+      
+      app.innerHTML = '';
+      app.appendChild(drilldown);
+    }
+
+    function fmt(n) { return n.toLocaleString(); }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    refresh();
+  </script>
+</body>
+</html>

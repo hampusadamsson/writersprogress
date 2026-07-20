@@ -7,7 +7,6 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
 COPY src/ ./src/
-COPY index.html ./
 COPY bookprogress.config.json ./
 RUN mkdir -p data
 # Run extract once to generate initial dashboard
