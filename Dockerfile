@@ -22,8 +22,8 @@ COPY --from=builder /app /app
 COPY --from=builder /usr/local/bin/pnpm /usr/local/bin/pnpm
 COPY --from=builder /usr/local/lib/node_modules /usr/local/lib/node_modules
 
-# Copy generated dashboard to nginx
-COPY --from=builder /app/data/index.html /usr/share/nginx/html/index.html
+# Placeholder page - replaced by first extract at runtime
+RUN echo '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BookProgress</title><style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#0d1117;color:#e6edf3}</style></head><body><div style="text-align:center"><h1>📚 BookProgress</h1><p>Dashboard loading soon&hellip;</p></div></body></html>' > /usr/share/nginx/html/index.html
 
 # Entrypoint
 COPY docker-entrypoint.sh /entrypoint.sh
