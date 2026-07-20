@@ -9,8 +9,8 @@ RUN pnpm install --frozen-lockfile --prod
 COPY src/ ./src/
 COPY bookprogress.config.json ./
 RUN mkdir -p data
-# Run extract once to generate initial dashboard
-RUN pnpm extract
+# Run extract once to generate initial dashboard (ignore failure in build)
+RUN pnpm extract || true
 
 # ── Runtime stage ──
 FROM nginx:alpine
