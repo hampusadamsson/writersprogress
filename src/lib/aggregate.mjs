@@ -247,6 +247,7 @@ export async function buildReport(cwd, config) {
     dailyGoal: config.dailyWordGoal,
     totalGoal: config.totalWordGoal,
     chapterTargetWords: config.chapterTargetWords,
+    wordsPerPage: config.wordsPerPage,
     textAnalysisSection: config.textAnalysisSection,
     estimatedFinish,
     perSection,
@@ -299,13 +300,17 @@ function computePerSection(days) {
 
   for (const day of days) {
     for (const file of day.files) {
-      if (file.deleted) continue
       if (!sections.has(file.section)) {
         sections.set(file.section, { words: 0, files: new Set() })
       }
       const s = sections.get(file.section)
-      s.words += file.wordsAdded - file.wordsRemoved
-      s.files.add(file.path)
+      if (file.deleted) {
+        s.words -= file.wordsRemoved
+        s.files.delete(file.path)
+      } else {
+        s.words += file.wordsAdded - file.wordsRemoved
+        s.files.add(file.path)
+      }
     }
   }
 

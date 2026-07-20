@@ -172,7 +172,7 @@
 <div class="top-bar">
   <h1>Writing Tracker</h1>
   <div style="display:flex;gap:8px;">
-    <button class="btn" onclick="toggleSettings()">Settings</button>
+    <button class="btn" onclick="toggleSettings()">Config</button>
   </div>
 </div>
 
@@ -244,8 +244,11 @@ function buildHTML() {
   <!-- Hero -->
   <div class="hero">
     <div class="hero-main">
-      <div class="hero-count">${fmt(totalWords)}</div>
-      <div class="hero-label">words written${isAll ? '' : ' · ' + activeSection} <span style="color:var(--text-muted);font-size:0.75rem;">~${Math.round(totalWords / 250)} pages</span></div>
+      <div>
+        <div class="hero-count">${fmt(totalWords)}</div>
+        <div style="color:var(--accent);font-size:0.9rem;font-weight:500;">~${Math.round(totalWords / (progress.wordsPerPage || 300))} pages</div>
+        <div class="hero-label">words written${isAll ? '' : ' · ' + activeSection}</div>
+      </div>
     </div>
     <div class="hero-bar-wrap">
       <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>
@@ -269,7 +272,8 @@ function buildHTML() {
       return `
     <div class="stat-card" style="cursor:pointer;border-left:3px solid ${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.45};transition:opacity 0.2s;" onclick="switchSection('${name}')">
       <div class="stat-value" style="font-size:1.35rem;">${fmt(info.words)}</div>
-      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files · ~${Math.round(info.words / 250)}p</span></div>
+      <div style="color:${sectionColors[name]};font-size:0.85rem;font-weight:500;margin-bottom:2px;">~${Math.round(info.words / (progress.wordsPerPage || 300))} pages</div>
+      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files</span></div>
     </div>`;
     }).join('')}
   </div>
@@ -360,7 +364,7 @@ function buildFileTable() {
       ${paginate(files, f => `
           <tr style="cursor:pointer;${f.deleted ? 'opacity:0.4' : ''}" onclick="switchFile('${f.path.replace(/'/g, "\\'")}')">
             <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${f.deleted ? 'text-decoration:line-through' : ''}" title="${f.path}${f.deleted ? ' (deleted)' : ''}">${f.path}</td>
-            <td>${f.section}${f.deleted ? ' 🗑' : ''}</td>
+            <td>${f.section}${f.deleted ? ' (deleted)' : ''}</td>
             <td class="num" style="color:var(--green)">+${fmt(f.added)}</td>
             <td class="num" style="color:var(--red)">−${fmt(f.removed)}</td>
             <td class="num">${f.deleted ? '<span style="color:var(--text-muted)">deleted</span>' : fmt(f.added - f.removed)}</td>
@@ -431,7 +435,7 @@ function buildFileDetail() {
 
   return `
   <div class="top-bar">
-    <h1>📄 ${shortName}</h1>
+    <h1>${shortName}</h1>
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="switchFile(null)">← Back</button>
     </div>
@@ -440,6 +444,7 @@ function buildFileDetail() {
   <div class="stats">
     <div class="stat-card green">
       <div class="stat-value">${fmt(totalWords)}</div>
+      <div style="color:var(--green);font-size:0.85rem;font-weight:500;margin-bottom:2px;">${Math.round(totalWords / (progress.wordsPerPage || 300))} pages</div>
       <div class="stat-label">Words</div>
     </div>
     ${stats ? `
@@ -562,7 +567,7 @@ function getFilteredDays() {
     }
     const d = dayMap.get(key);
     for (const f of day.files) {
-      if (f.section !== activeSection) continue;
+      if (f.section !== activeSection || f.deleted) continue;
       d.wordsAdded += f.wordsAdded;
       d.wordsRemoved += f.wordsRemoved;
     }
@@ -702,7 +707,7 @@ const CHART_TIPS = {
   },
   cumulative: {
     title: 'Cumulative Progress',
-    desc: 'Total words over time. Blue line = actual word count. Dashed yellow = total goal. Dashed green = pace to hit daily goal. Blue above green = on track.',
+    desc: 'Total words over time. Solid blue = actual words. Dashed yellow = total goal. Dashed green = daily goal pace projection. Dotted blue = current pace projection. Dotted lines extend to estimated finish dates.',
     bench: 'The Great Gatsby ~47,000 words · Fight Club ~50,000 · Harry Potter 1 ~77,000 · Average novel 80,000–100,000',
   },
   style: {
@@ -900,6 +905,18 @@ function metricColorInv(value, t) {
   return 'red';
 }
 
+function getDaysWithStats() {
+  if (activeSection === 'all') return progress.days.filter(d => d.textStats);
+  return progress.days.filter(day =>
+    day.files.some(f => f.section === activeSection && f.textStats && !f.deleted)
+  ).map(day => {
+    const sectionFiles = day.files.filter(f => f.section === activeSection && f.textStats && !f.deleted);
+    if (!sectionFiles.length) return { ...day, textStats: null };
+    const statsList = sectionFiles.map(f => f.textStats);
+    return { ...day, textStats: aggregateTextStats(statsList) };
+  }).filter(d => d.textStats);
+}
+
 function getLatestTextStats() {
   // Find files with textStats in the active section across the latest day
   for (let i = progress.days.length - 1; i >= 0; i--) {
@@ -942,7 +959,7 @@ function aggregateTextStats(statsList) {
 function renderStyleChart() {
   const ctx = document.getElementById('styleChart');
   if (!ctx) return;
-  const daysWithStats = progress.days.filter((d) => d.textStats);
+  const daysWithStats = getDaysWithStats();
   Chart.getChart('styleChart')?.destroy();
   new Chart(ctx, {
     type: 'line',
@@ -1047,7 +1064,7 @@ function renderHoursChart() {
 function renderVocabChart() {
   const ctx = document.getElementById('vocabChart');
   if (!ctx) return;
-  const daysWithStats = progress.days.filter((d) => d.textStats);
+  const daysWithStats = getDaysWithStats();
   Chart.getChart('vocabChart')?.destroy();
   new Chart(ctx, {
     type: 'line',
@@ -1095,7 +1112,7 @@ function renderVocabChart() {
 function renderSentimentChart() {
   const ctx = document.getElementById('sentimentChart');
   if (!ctx) return;
-  const daysWithStats = progress.days.filter((d) => d.textStats);
+  const daysWithStats = getDaysWithStats();
   Chart.getChart('sentimentChart')?.destroy();
   new Chart(ctx, {
     type: 'line',
@@ -1146,7 +1163,7 @@ function buildChapterTable() {
         <tr style="cursor:pointer;" onclick="switchFile('${path.replace(/'/g, "\\'")}')">
           <td>${name}</td>
           <td class="num">${fmt(wc)}</td>
-          <td class="num" style="color:var(--text-muted);">~${Math.round(wc / 250)}</td>
+          <td class="num" style="color:var(--text-muted);">~${Math.round(wc / (progress.wordsPerPage || 300))}</td>
           <td class="num"><span style="display:inline-block;width:100px;height:6px;background:#21262d;border-radius:3px;vertical-align:middle;"><span style="display:block;height:100%;width:${Math.min(pct,100)}%;background:${pct>=100?'#3fb950':'#58a6ff'};border-radius:3px;"></span></span> ${pct}%</td>
         </tr>`;
       }, 'chapterlist', 4)}
@@ -1177,10 +1194,11 @@ function toggleSettings() {
     panel.id = 'settings-panel'
     panel.className = 'settings-panel'
     panel.innerHTML = `
-      <h2 style="margin-bottom:16px;">Settings</h2>
+      <h2 style="margin-bottom:16px;">Config</h2>
       ${row('Daily Word Goal', progress.dailyGoal.toLocaleString())}
       ${row('Total Word Goal', progress.totalGoal.toLocaleString())}
       ${row('Chapter Target', (progress.chapterTargetWords || 2500).toLocaleString() + ' words')}
+      ${row('Words Per Page', (progress.wordsPerPage || 300).toString())}
       ${row('Text Analysis Section', progress.textAnalysisSection || 'Manuscript')}
       ${row('Book Folder', progress.bookFolder || './Ruindykarna')}
       ${row('Exclude Patterns', 'templates/**, **/.gitkeep, **/*.base, **/.sync-conflict*')}
@@ -1208,23 +1226,6 @@ function toggleSettings() {
 
 // ── Helpers ──
 function fmt(n) { return n.toLocaleString(); }
-
-function estimateFinish(days, goalTarget) {
-  if (!days.length) return { paced: null, onTrack: null }
-  const total = days[days.length - 1].totalWords
-  if (total >= goalTarget) return { paced: null, onTrack: null }
-  const remaining = goalTarget - total
-  const allTimeAvg = total / days.length
-  const pacedDays = allTimeAvg > 0 ? Math.ceil(remaining / allTimeAvg) : null
-  const onTrackDays = progress.dailyGoal > 0 ? Math.ceil(remaining / progress.dailyGoal) : null
-  const addDays = (d) => {
-    if (d === null) return null
-    const dt = new Date()
-    dt.setDate(dt.getDate() + d)
-    return dt.toISOString().slice(0, 10)
-  }
-  return { paced: addDays(pacedDays), onTrack: addDays(onTrackDays) }
-}
 
 function showToast(msg) {
   const t = document.getElementById('toast');
