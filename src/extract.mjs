@@ -6,6 +6,7 @@ import { loadConfig } from './lib/config.mjs'
 const OUTPUT_JSON = resolve('data/progress.json')
 const OUTPUT_HTML = resolve('data/index.html')
 const TEMPLATE = resolve('index.html')
+const FALLBACK_TEMPLATE = resolve('src/template.html')
 
 const HELP = `📚 BookProgress — track your book's progress through git history
 
@@ -131,7 +132,12 @@ async function generateHtml(report) {
     }
   }
 
-  const template = await readFile(TEMPLATE, 'utf-8')
+  let template
+  try {
+    template = await readFile(TEMPLATE, 'utf-8')
+  } catch {
+    template = await readFile(FALLBACK_TEMPLATE, 'utf-8')
+  }
   const html = template.replace(
     '// __PROGRESS_JSON__',
     `const __PROGRESS_JSON__ = ${JSON.stringify(report)};`,

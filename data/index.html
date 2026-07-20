@@ -265,8 +265,21 @@ function buildHTML() {
     </div>
   </div>
 
+  <!-- Section cards -->
+  <div class="stats" style="margin-bottom:12px;">
+    ${Object.entries(d.perSection).map(([name, info]) => {
+      const spct = Math.round(info.words / d.totalWords * 100);
+      const filesInSection = info.files || 0;
+      return `
+    <div class="stat-card" style="cursor:pointer;border-left:3px solid ${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.45};transition:opacity 0.2s;" onclick="switchSection('${name}')">
+      <div class="stat-value" style="font-size:1.35rem;">${fmt(info.words)}</div>
+      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files</span></div>
+    </div>`;
+    }).join('')}
+  </div>
+
   <!-- Section bar -->
-  <div class="section-bar">
+  <div class="section-bar" style="margin-bottom:8px;">
     ${Object.entries(d.perSection).map(([name, data]) =>
       `<span style="width:${data.words/d.totalWords*100}%;background:${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.4}" title="${name}: ${fmt(data.words)}"></span>`
     ).join('')}
@@ -279,13 +292,13 @@ function buildHTML() {
   <div class="tabs">
     <button class="tab ${activeTab === 'progress' ? 'active' : ''}" onclick="switchTab('progress')">Progress</button>
     <button class="tab ${activeTab === 'style' ? 'active' : ''}" onclick="switchTab('style')">Style</button>
-    <button class="tab ${activeTab === 'activity' ? 'active' : ''}" onclick="switchTab('activity')">Activity</button>
   </div>
 
   <div class="tab-content" id="tab-progress" style="${activeTab === 'progress' ? '' : 'display:none'}">
+    <div class="chart-box" style="margin-bottom:16px;"><h2>Progress ${chartTip('cumulative')}</h2><canvas id="cumulativeChart"></canvas></div>
     <div class="charts">
       <div class="chart-box"><h2>Daily Words ${chartTip('daily')}</h2><canvas id="dailyChart"></canvas></div>
-      <div class="chart-box"><h2>Cumulative Progress ${chartTip('cumulative')}</h2><canvas id="cumulativeChart"></canvas></div>
+      <div class="chart-box"><h2>Writing Schedule ${chartTip('hours')}</h2><canvas id="hoursChart"></canvas></div>
     </div>
   </div>
 
@@ -296,13 +309,6 @@ function buildHTML() {
     </div>
     <div class="charts">
       <div class="chart-box"><h2>Sentiment Trend ${chartTip('sentiment')}</h2><canvas id="sentimentChart"></canvas></div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="tab-activity" style="${activeTab === 'activity' ? '' : 'display:none'}">
-    <div class="charts">
-      <div class="chart-box"><h2>Writing Schedule ${chartTip('hours')}</h2><canvas id="hoursChart"></canvas></div>
-      <div class="chart-box"><h2>Character Mentions ${chartTip('characters')}</h2><canvas id="characterChart"></canvas></div>
     </div>
   </div>
 
@@ -361,7 +367,7 @@ function buildFileTable() {
 
 function switchSection(section) {
   selectedFile = null;
-  activeSection = section;
+  activeSection = activeSection === section ? 'all' : section;
   render();
 }
 
@@ -465,10 +471,6 @@ function buildFileDetail() {
     <div class="stat-card">
       <div class="stat-value" style="color:${stats.sentimentPolarity >= 0 ? 'var(--green)' : 'var(--red)'}">${stats.sentimentPolarity > 0 ? '+' : ''}${stats.sentimentPolarity}</div>
       <div class="stat-label">Sentiment</div>
-    </div>
-    <div class="stat-card" style="grid-column:span 2;">
-      <div class="stat-value" style="font-size:0.85rem;">${(stats.entities && Object.keys(stats.entities).length) ? Object.entries(stats.entities).slice(0,5).map(([n,c]) => n + ' (' + c + ')').join(', ') : '—'}</div>
-      <div class="stat-label">Character Mentions</div>
     </div>
     ` : '<div class="stat-card" style="grid-column:span 4;"><div class="stat-label">No text metrics for this file</div></div>'}
   </div>
@@ -577,7 +579,6 @@ function renderCharts() {
   renderHoursChart();
   renderVocabChart();
   renderSentimentChart();
-  renderCharacterChart();
 }
 
 function renderDailyChart() {
@@ -612,28 +613,67 @@ function renderCumulativeChart() {
   const days = getFilteredDays();
   const labels = days.map(d => d.date);
   const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
-  // Scale goal proportionally when filtering
   const isAll = activeSection === 'all';
   const goalTarget = isAll ? progress.totalGoal : Math.round(progress.totalGoal * (totalWords / (progress.totalWords || 1)));
   const paceBase = isAll ? progress.dailyGoal : Math.round(progress.dailyGoal * (totalWords / (progress.totalWords || 1)));
+  const est = progress.estimatedFinish || {};
+
+  // Build extended labels to later estimate date
+  const today = new Date();
+  const lastDate = days.length > 0 ? new Date(days[days.length - 1].date) : today;
+  const onTrackDate = est.onTrack ? new Date(est.onTrack) : null;
+  const pacedDate = est.paced ? new Date(est.paced) : null;
+  const endDate = onTrackDate && pacedDate ? new Date(Math.max(onTrackDate, pacedDate)) : (onTrackDate || pacedDate || new Date(today.getTime() + 30*86400000));
+  
+  const extLabels = [...labels];
+  const extActual = days.map(d => d.totalWords);
+  const extGoalPace = days.map((_, i) => paceBase * (i + 1));
+  const extCurrentPace = days.map((_, i) => paceBase * (i + 1)); // placeholder, recalc below
+  
+  // Current pace: average words/day so far
+  const dailyAvg = days.length > 0 ? totalWords / days.length : paceBase;
+  
+  // Extend labels day by day from lastDate+1 to endDate
+  const cursor = new Date(lastDate);
+  cursor.setDate(cursor.getDate() + 1);
+  let dIdx = days.length;
+  let projGoal = totalWords; // projected at daily goal pace
+  let projPace = totalWords; // projected at current pace
+  
+  while (cursor <= endDate) {
+    const dateStr = cursor.toISOString().slice(0, 10);
+    extLabels.push(dateStr);
+    extActual.push(null); // no actual data beyond today
+    projGoal = Math.min(projGoal + paceBase, goalTarget);
+    projPace = Math.min(projPace + dailyAvg, goalTarget);
+    extGoalPace.push(projGoal);
+    extCurrentPace.push(projPace);
+    cursor.setDate(cursor.getDate() + 1);
+    dIdx++;
+  }
+  
   Chart.getChart('cumulativeChart')?.destroy();
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels,
+      labels: extLabels,
       datasets: [
         {
-          label: 'Total Words', data: days.map(d => d.totalWords),
+          label: 'Total Words', data: extActual,
           borderColor: sectionColors[activeSection] || '#58a6ff', backgroundColor: (sectionColors[activeSection] || '#58a6ff') + '22',
-          fill: true, tension: 0.3, pointRadius: 3
+          fill: true, tension: 0.3, pointRadius: 3, spanGaps: false
         },
         {
-          label: 'Goal', data: days.map(() => goalTarget),
+          label: 'Goal', data: extLabels.map(() => goalTarget),
           borderColor: '#d2991d', borderDash: [6, 4], pointRadius: 0, fill: false
         },
         {
-          label: 'Daily Goal Pace', data: days.map((_, i) => paceBase * (i + 1)),
-          borderColor: '#3fb95066', borderDash: [3, 6], pointRadius: 0, fill: false
+          label: est.onTrack ? 'Daily Goal \u2192 ' + est.onTrack : 'Daily Goal Pace', data: extGoalPace,
+          borderColor: '#3fb950', borderDash: [3, 6], pointRadius: 0, fill: false
+        },
+        {
+          label: est.paced ? 'Current Pace \u2192 ' + est.paced : 'Current Pace', data: extCurrentPace,
+          borderColor: '#58a6ff88', borderDash: [2, 8], pointRadius: 0, fill: false
         }
       ]
     },
@@ -719,7 +759,7 @@ const METRIC_INFO = {
   },
   lix: {
     name: 'LIX Readability',
-    desc: 'Swedish standard readability score. Combines sentence length and long-word ratio. Lower = easier to read.',
+    desc: 'Readability score. Combines sentence length and long-word ratio. Lower = easier to read.',
     calc: '(words ÷ sentences) + (long words × 100 ÷ words)',
     bench: 'Harry Potter 25 · Da Vinci Code 30 · Newspapers 45 · Academic 55+',
   },
@@ -732,13 +772,13 @@ const METRIC_INFO = {
   passiveRatio: {
     name: 'Passive Voice',
     desc: 'Passive verb forms per 1000 words. Passive voice creates distance and formality. Active voice is more engaging.',
-    calc: 'S-passives (skrivs, görs) + periphrastic (blir skriven) per 1000 words',
+    calc: 'S-passives + periphrastic forms per 1000 words',
     bench: 'Good fiction <2 · News articles 3–5 · Academic 10+',
   },
   adverbRatio: {
     name: 'Adverb Density',
     desc: 'Adverbs per 1000 words. Stephen King: "The road to hell is paved with adverbs." Fewer adverbs = stronger prose.',
-    calc: 'Swedish adverbs (-vis, -ligen, -t forms + common list) per 1000 words',
+    calc: 'Adverbs (-vis, -ly, -ment forms + common list) per 1000 words',
     bench: 'King recommends <5 · Bestsellers avg 8–12 · Purple prose 15+',
   },
   ttr: {
@@ -811,26 +851,32 @@ function buildMetricStrip() {
   const lastStats = getLatestTextStats();
   if (!lastStats) return '';
   const t = progress.thresholds || {};
-  const dot = (key, value) => {
-    const c = key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
-    const cls = c === 'green' ? 'dot-g' : c === 'orange' ? 'dot-o' : c === 'red' ? 'dot-r' : '';
-    return `<span class="dot ${cls}"></span>`;
-  };
+
+  const cards = [
+    { key: 'sentenceLengthAvg', label: 'Sentence Length', value: lastStats.sentenceLengthAvg, suffix: '' },
+    { key: 'lix', label: 'LIX', value: lastStats.lix, suffix: '' },
+    { key: 'dialogueRatio', label: 'Dialogue', value: lastStats.dialogueRatio, suffix: '%' },
+    { key: 'passiveRatio', label: 'Passive /1000w', value: lastStats.passiveRatio, suffix: '' },
+    { key: 'adverbRatio', label: 'Adverbs /1000w', value: lastStats.adverbRatio, suffix: '' },
+    { key: 'ttr', label: 'TTR', value: lastStats.ttr, suffix: '' },
+  ];
+
+  const colorFn = (key, value) => key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
 
   return `
-  <div class="metric-strip has-tip">
-    <span>Sent ${lastStats.sentenceLengthAvg} ${dot('sentenceLengthAvg', lastStats.sentenceLengthAvg)}</span>
-    <span>LIX ${lastStats.lix} ${dot('lix', lastStats.lix)}</span>
-    <span>Dialog ${lastStats.dialogueRatio}% ${dot('dialogueRatio', lastStats.dialogueRatio)}</span>
-    <span>Pass ${lastStats.passiveRatio} ${dot('passiveRatio', lastStats.passiveRatio)}</span>
-    <span>Adv ${lastStats.adverbRatio} ${dot('adverbRatio', lastStats.adverbRatio)}</span>
-    <span>TTR ${lastStats.ttr} ${dot('ttr', lastStats.ttr)}</span>
-    <span>Edit ${progress.editRatio}%</span>
-    <span class="tip" style="width:320px;max-width:calc(100vw - 16px);">
-      <b>Manuscript Metrics</b><br>
-      Hover individual metric cards in file drill-down for detailed explanations and famous book benchmarks.<br>
-      <div class="bench">Sent=sentence length · LIX=readability · Dialog=dialogue ratio · Pass=passive/1000w · Adv=adverbs/1000w · TTR=vocabulary richness · Edit=edit ratio</div>
-    </span>
+  <h2 style="margin-bottom:4px;">${activeSection === 'all' ? 'Manuscript' : activeSection} Metrics</h2>
+  <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
+    ${cards.map(c => `
+    <div class="stat-card has-tip ${colorFn(c.key, c.value)}" style="padding:10px 14px;">
+      <div class="stat-value" style="font-size:1.25rem;">${c.value}${c.suffix}</div>
+      <div class="stat-label" style="font-size:0.7rem;">${c.label}</div>
+      ${tip(c.key, c.value)}
+    </div>`).join('')}
+    <div class="stat-card has-tip" style="padding:10px 14px;">
+      <div class="stat-value" style="font-size:1.25rem;">${progress.editRatio}%</div>
+      <div class="stat-label" style="font-size:0.7rem;">Edit Ratio</div>
+      ${tip('editRatio', progress.editRatio)}
+    </div>
   </div>`;
 }
 function metricColor(value, t) {
@@ -856,10 +902,41 @@ function metricColorInv(value, t) {
 }
 
 function getLatestTextStats() {
+  // Find files with textStats in the active section across the latest day
   for (let i = progress.days.length - 1; i >= 0; i--) {
-    if (progress.days[i].textStats) return progress.days[i].textStats;
+    const day = progress.days[i];
+    if (activeSection === 'all') {
+      if (day.textStats) return day.textStats;
+    } else {
+      const sectionFiles = day.files.filter(f => f.section === activeSection && f.textStats);
+      if (sectionFiles.length > 0) {
+        // Aggregate textStats from section files
+        return aggregateTextStats(sectionFiles.map(f => f.textStats));
+      }
+    }
   }
   return null;
+}
+
+function aggregateTextStats(statsList) {
+  if (!statsList.length) return null;
+  const first = statsList[0];
+  const keys = Object.keys(first).filter(k => k !== 'entities');
+  const result = {};
+  for (const key of keys) {
+    const values = statsList.map(s => s[key]).filter(v => typeof v === 'number');
+    if (values.length) result[key] = values.reduce((a, b) => a + b, 0) / values.length;
+  }
+  // Merge entities
+  result.entities = {};
+  for (const s of statsList) {
+    if (s.entities) {
+      for (const [name, count] of Object.entries(s.entities)) {
+        result.entities[name] = (result.entities[name] || 0) + count;
+      }
+    }
+  }
+  return result;
 }
 
 // ── Style chart (writing quality over time) ──
@@ -1048,41 +1125,6 @@ function renderSentimentChart() {
           grid: { color: '#21262d' },
           title: { display: true, text: 'sentiment', color: '#8b949e' }
         }
-      }
-    }
-  });
-}
-
-// ── Character mentions ──
-function buildCharacterChart() {
-  const trends = progress.characterTrends || {};
-  const entries = Object.entries(trends).sort((a,b) => b[1].total - a[1].total);
-  if (!entries.length) return '';
-  return `<canvas id="characterChart"></canvas>`;
-}
-
-function renderCharacterChart() {
-  const ctx = document.getElementById('characterChart');
-  if (!ctx) return;
-  const trends = progress.characterTrends || {};
-  const entries = Object.entries(trends).sort((a,b) => b[1].total - a[1].total).slice(0, 15);
-  Chart.getChart('characterChart')?.destroy();
-  new Chart(ctx, {
-    type: 'bar',
-    indexAxis: 'y',
-    data: {
-      labels: entries.map(e => e[0]),
-      datasets: [{
-        label: 'Mentions', data: entries.map(e => e[1].total),
-        backgroundColor: '#58a6ff66', borderColor: '#58a6ff', borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'mentions', color: '#8b949e' } },
-        y: { ticks: { color: '#8b949e', font: { size: 11 } }, grid: { display: false } }
       }
     }
   });

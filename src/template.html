@@ -78,196 +78,1207 @@
     padding: 4px 12px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem;
   }
   .section-tab.active { border-color: var(--accent); color: var(--accent); }
-  .tip {
-    position: absolute; z-index: 100; background: var(--surface); border: 1px solid var(--border);
-    color: var(--text); padding: 8px 12px; border-radius: var(--radius); font-size: 0.75rem;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5); pointer-events: none;
-    max-width: 280px; white-space: normal; word-wrap: break-word; overflow-wrap: break-word;
+  .settings-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 24px; display: none;
   }
-  .has-tip { cursor: help; }
-  .toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-    background: var(--accent); color: white; padding: 8px 16px; border-radius: 20px;
-    font-size: 0.85rem; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 1000;
+  .settings-panel.open { display: block; }
+  .setting-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .setting-row label { width: 160px; font-size: 0.85rem; color: var(--text-muted); }
+  .setting-row input {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 6px 10px; border-radius: var(--radius); font-size: 0.9rem; width: 160px;
   }
-  .toast.show { opacity: 1; }
+  .has-tip { cursor: help; position: relative; }
+  .has-tip .tip {
+    display: none; position: fixed; background: #1c2128; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 14px; width: 280px; max-width: calc(100vw - 16px); z-index: 100;
+    font-size: 0.75rem; line-height: 1.5; color: var(--text); pointer-events: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    white-space: normal; word-wrap: break-word; overflow-wrap: break-word; font-weight: 400;
+  }
+  .has-tip:hover .tip { display: block; }
+  .tip b { color: var(--accent); }
+  .tip .bench { color: var(--text-muted); font-size: 0.7rem; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; line-height: 1.6; }
+  .setting-row input:focus { outline: none; border-color: var(--accent); }
+  .setting-val { color: var(--text); font-size: 0.85rem; }
   .c-green { color: var(--green); }
   .c-orange { color: var(--orange); }
   .c-red { color: var(--red); }
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 10px 18px; border-radius: var(--radius); font-size: 0.85rem;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10;
+  }
+  .toast.show { opacity: 1; }
+  .loading { text-align: center; padding: 60px 0; color: var(--text-muted); }
+  .error-state { text-align: center; padding: 60px 0; }
+  .error-state p { color: var(--red); margin-bottom: 12px; }
+
+  /* Hero */
+  .hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .hero-main { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+  .hero-count { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em; }
+  .hero-label { font-size: 0.9rem; color: var(--text-muted); }
+  .hero-bar-wrap { margin-bottom: 14px; }
+  .hero-bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
+  .hero-bar-fill { height: 100%; background: linear-gradient(90deg, #3fb950, #58a6ff); border-radius: 4px; transition: width 0.5s; }
+  .hero-bar-pct { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+  .hero-stats { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.8rem; color: var(--text-muted); }
+  .hero-stats span { white-space: nowrap; }
+  .hero-stats i { font-style: normal; opacity: 0.6; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 2px; margin: 16px 0; border-bottom: 2px solid var(--border); }
+  .tab { background: none; border: none; color: var(--text-muted); padding: 8px 20px; cursor: pointer; font-size: 0.85rem; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* Metric strip */
+  .metric-strip { display: flex; gap: 14px; flex-wrap: wrap; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 4px; font-size: 0.78rem; color: var(--text-muted); align-items: center; position: relative; }
+  .metric-strip span { white-space: nowrap; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 1px; vertical-align: middle; background: var(--text-muted); }
+  .dot-g { background: var(--green); }
+  .dot-o { background: var(--orange); }
+  .dot-r { background: var(--red); }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    body { padding: 12px; }
+    h1 { font-size: 1.25rem; }
+    .top-bar { gap: 8px; }
+    .hero { padding: 16px; }
+    .hero-count { font-size: 1.8rem; }
+    .hero-stats { gap: 10px; font-size: 0.7rem; }
+    .tab { padding: 6px 14px; font-size: 0.78rem; }
+    .metric-strip { gap: 8px; font-size: 0.7rem; padding: 8px 12px; }
+    .stats { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
+    .stat-card { padding: 12px; }
+    .stat-value { font-size: 1.35rem; }
+    .stat-label { font-size: 0.7rem; }
+    .charts { grid-template-columns: 1fr; gap: 12px; }
+    .chart-box { padding: 12px; }
+    .chart-box canvas { max-height: 220px; }
+    .has-tip .tip { width: 240px; font-size: 0.7rem; padding: 8px 10px; }
+    .section-tabs { gap: 2px; }
+    .section-tab { padding: 3px 8px; font-size: 0.7rem; }
+    .detail-table { font-size: 0.7rem; }
+    .detail-table th, .detail-table td { padding: 4px 6px; }
+    .setting-row { flex-wrap: wrap; gap: 6px; }
+    .setting-row label { width: 100%; }
+    .settings-panel { padding: 14px; }
+    .drilldown { overflow-x: auto; }
+    .chapter-bar { flex-wrap: wrap; }
+  }
 </style>
 </head>
 <body>
+
+<div class="top-bar">
+  <h1>📚 BookProgress</h1>
+  <div style="display:flex;gap:8px;">
+    <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
+  </div>
+</div>
+
+<div id="app"><div class="loading">Loading…</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ──
+let progress = null;
+let activeSection = 'all';
+let activeTab = 'progress';
+let selectedFile = null;
+
+// ── Colors for sections ──
+const COLORS = ['#58a6ff','#3fb950','#d2991d','#f85149','#bc8cff','#ff7b72','#a5d6ff','#56d364'];
+const sectionColors = {};
+
+// __PROGRESS_JSON__
+
+// ── Init ──
+function refresh() {
+  document.getElementById('app').innerHTML = '<div class="loading">Loading…</div>';
+  try {
+    if (typeof __PROGRESS_JSON__ === 'undefined') {
+      throw new Error('No data embedded. Run: pnpm extract');
+    }
+    progress = __PROGRESS_JSON__;
+    render();
+  } catch (err) {
+    document.getElementById('app').innerHTML =
+      `<div class="error-state"><p>${err.message}</p></div>`;
+  }
+}
+
+function render() {
+  if (!progress || !progress.days.length) {
+    document.getElementById('app').innerHTML = '<div class="loading">No data yet. Run <code>pnpm extract</code>.</div>';
+    return;
+  }
+  assignSectionColors();
+  if (selectedFile) {
+    document.getElementById('app').innerHTML = buildFileDetail();
+    renderFileDetailCharts();
+  } else {
+    document.getElementById('app').innerHTML = buildHTML();
+    renderCharts();
+  }
+}
+
+function assignSectionColors() {
+  const sections = Object.keys(progress.perSection || {});
+  sections.forEach((s, i) => sectionColors[s] = COLORS[i % COLORS.length]);
+  sectionColors['All'] = COLORS[0];
+}
+
+// ── HTML ──
+function buildHTML() {
+  const d = progress;
+  const days = getFilteredDays();
+  const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
+  const isAll = activeSection === 'all';
+  const goalTarget = isAll ? d.totalGoal : Math.round(d.totalGoal * (totalWords / (d.totalWords || 1)));
+  const estFinish = d.estimatedFinish || {};
+  const pct = goalTarget > 0 ? Math.round(totalWords / goalTarget * 100) : 0;
+  const dailyAvg = days.length > 0 ? Math.round(totalWords / days.length) : 0;
+
+  return `
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-main">
+      <div class="hero-count">${fmt(totalWords)}</div>
+      <div class="hero-label">words written${isAll ? '' : ' · ' + activeSection}</div>
+    </div>
+    <div class="hero-bar-wrap">
+      <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>
+      <div class="hero-bar-pct">${pct}% of ${fmt(goalTarget)}</div>
+    </div>
+    <div class="hero-stats">
+      <span>⏳ ${estFinish.paced || '—'} <i>at pace</i></span>
+      <span>🎯 ${estFinish.onTrack || '—'} <i>on track</i></span>
+      <span>📊 ${fmt(dailyAvg)} <i>avg/day</i></span>
+      <span>🔥 ${calcStreak(days)} <i>day streak</i></span>
+    </div>
+  </div>
+
+  <!-- Section cards -->
+  <div class="stats" style="margin-bottom:12px;">
+    ${Object.entries(d.perSection).map(([name, info]) => {
+      const spct = Math.round(info.words / d.totalWords * 100);
+      const filesInSection = info.files || 0;
+      return `
+    <div class="stat-card" style="cursor:pointer;border-left:3px solid ${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.45};transition:opacity 0.2s;" onclick="switchSection('${name}')">
+      <div class="stat-value" style="font-size:1.35rem;">${fmt(info.words)}</div>
+      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files</span></div>
+    </div>`;
+    }).join('')}
+  </div>
+
+  <!-- Section bar -->
+  <div class="section-bar" style="margin-bottom:8px;">
+    ${Object.entries(d.perSection).map(([name, data]) =>
+      `<span style="width:${data.words/d.totalWords*100}%;background:${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.4}" title="${name}: ${fmt(data.words)}"></span>`
+    ).join('')}
+  </div>
+
+  <!-- Compact metric strip -->
+  ${buildMetricStrip()}
+
+  <!-- Chart tabs -->
+  <div class="tabs">
+    <button class="tab ${activeTab === 'progress' ? 'active' : ''}" onclick="switchTab('progress')">Progress</button>
+    <button class="tab ${activeTab === 'style' ? 'active' : ''}" onclick="switchTab('style')">Style</button>
+  </div>
+
+  <div class="tab-content" id="tab-progress" style="${activeTab === 'progress' ? '' : 'display:none'}">
+    <div class="chart-box" style="margin-bottom:16px;"><h2>Progress ${chartTip('cumulative')}</h2><canvas id="cumulativeChart"></canvas></div>
+    <div class="charts">
+      <div class="chart-box"><h2>Daily Words ${chartTip('daily')}</h2><canvas id="dailyChart"></canvas></div>
+      <div class="chart-box"><h2>Writing Schedule ${chartTip('hours')}</h2><canvas id="hoursChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tab-style" style="${activeTab === 'style' ? '' : 'display:none'}">
+    <div class="charts">
+      <div class="chart-box"><h2>Writing Style ${chartTip('style')}</h2><canvas id="styleChart"></canvas></div>
+      <div class="chart-box"><h2>Vocabulary Richness ${chartTip('vocab')}</h2><canvas id="vocabChart"></canvas></div>
+    </div>
+    <div class="charts">
+      <div class="chart-box"><h2>Sentiment Trend ${chartTip('sentiment')}</h2><canvas id="sentimentChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Chapter table -->
+  ${buildChapterTable()}
+
+  <!-- Drilldown -->
+  <div class="drilldown">
+    <h2>Files <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted);">— click for per-file metrics</span></h2>
+    <div class="section-tabs">
+      <button class="section-tab ${activeSection === 'all' ? 'active' : ''}" onclick="switchSection('all')">All</button>
+      ${Object.keys(d.perSection).map(s =>
+        `<button class="section-tab ${activeSection === s ? 'active' : ''}" onclick="switchSection('${s}')">${s} (${fmt(d.perSection[s].words)})</button>`
+      ).join('')}
+    </div>
+    ${buildFileTable()}
+  </div>
+  `;
+}
+
+function buildFileTable() {
+  // Collect all files across all days, deduped
+  const fileMap = new Map();
+  for (const day of progress.days) {
+    for (const f of day.files) {
+      if (activeSection !== 'all' && f.section !== activeSection) continue;
+      if (!fileMap.has(f.path)) {
+        fileMap.set(f.path, { path: f.path, section: f.section, added: 0, removed: 0, deleted: false });
+      }
+      const entry = fileMap.get(f.path);
+      entry.added += f.wordsAdded;
+      entry.removed += f.wordsRemoved;
+      if (f.deleted) entry.deleted = true;
+    }
+  }
+  const files = [...fileMap.values()].sort((a,b) => (b.added - b.removed) - (a.added - a.removed));
+  if (!files.length) return '<p style="color:var(--text-muted);font-size:0.85rem;">No files in this section</p>';
+  return `
+    <div style="overflow-x:auto;">
+    <table class="detail-table">
+      <thead><tr><th>File</th><th>Section</th><th class="num">Added</th><th class="num">Removed</th><th class="num">Net</th></tr></thead>
+      <tbody>
+        ${files.map(f => `
+          <tr style="cursor:pointer;${f.deleted ? 'opacity:0.4' : ''}" onclick="switchFile('${f.path.replace(/'/g, "\\'")}')">
+            <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${f.deleted ? 'text-decoration:line-through' : ''}" title="${f.path}${f.deleted ? ' (deleted)' : ''}">${f.path}</td>
+            <td>${f.section}${f.deleted ? ' 🗑' : ''}</td>
+            <td class="num" style="color:var(--green)">+${fmt(f.added)}</td>
+            <td class="num" style="color:var(--red)">−${fmt(f.removed)}</td>
+            <td class="num">${f.deleted ? '<span style="color:var(--text-muted)">deleted</span>' : fmt(f.added - f.removed)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
+function switchSection(section) {
+  selectedFile = null;
+  activeSection = activeSection === section ? 'all' : section;
+  render();
+}
+
+function switchTab(tab) {
+  activeTab = tab;
+  // Re-render only tab content and charts to avoid full DOM rebuild
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().startsWith(tab)));
+  document.querySelectorAll('.tab-content').forEach(el => { el.style.display = el.id === 'tab-' + tab ? '' : 'none'; });
+  renderCharts();
+}
+
+function switchFile(path) {
+  selectedFile = path;
+  render();
+}
+
+// ── File detail view ──
+function getFileDays(path) {
+  const dayMap = new Map();
+  for (const day of progress.days) {
+    for (const f of day.files) {
+      if (f.path !== path) continue;
+      if (!dayMap.has(day.date)) {
+        dayMap.set(day.date, { date: day.date, wordsAdded: 0, wordsRemoved: 0, totalWords: 0, textStats: null });
+      }
+      const d = dayMap.get(day.date);
+      d.wordsAdded += f.wordsAdded;
+      d.wordsRemoved += f.wordsRemoved;
+      if (f.textStats) d.textStats = f.textStats;
+    }
+  }
+  const days = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date));
+  let running = 0;
+  for (const d of days) {
+    running += d.wordsAdded - d.wordsRemoved;
+    d.totalWords = running;
+  }
+  return days;
+}
+
+function getLatestFileStats(path) {
+  for (let i = progress.days.length - 1; i >= 0; i--) {
+    for (const f of progress.days[i].files) {
+      if (f.path === path && f.textStats) return f.textStats;
+    }
+  }
+  return null;
+}
+
+function buildFileDetail() {
+  const days = getFileDays(selectedFile);
+  const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
+  const stats = getLatestFileStats(selectedFile);
+  const t = progress.thresholds || {};
+  const shortName = selectedFile.split('/').pop().replace('.md', '');
+
+  return `
   <div class="top-bar">
-    <h1>📚 BookProgress</h1>
-    <div style="display:flex; gap:8px;">
-      <button class="btn" onclick="toggleSettings()">⚙️ Settings</button>
+    <h1>📄 ${shortName}</h1>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="switchFile(null)">← Back</button>
     </div>
   </div>
 
-  <div id="settings-panel" class="chart-box" style="display:none; margin-bottom:24px;">
-    <h2>Settings</h2>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; font-size:0.85rem;">
-      <div>
-        <label>Daily Goal: <input type="number" id="set-daily" step="100"></label>
-      </div>
-      <div>
-        <label>Total Goal: <input type="number" id="set-total" step="1000"></label>
-      </div>
+  <div class="stats">
+    <div class="stat-card green">
+      <div class="stat-value">${fmt(totalWords)}</div>
+      <div class="stat-label">Words</div>
     </div>
-    <button class="btn" style="margin-top:12px;" onclick="saveSettings()">Save & Refresh</button>
+    ${stats ? `
+    <div class="stat-card has-tip ${metricColor(stats.sentenceLengthAvg, t.sentenceLengthAvg)}">
+      <div class="stat-value">${Math.round(stats.sentenceLengthAvg)}</div>
+      <div class="stat-label">Sentence Length</div>
+      ${tip('sentenceLengthAvg', stats.sentenceLengthAvg)}
+    </div>
+    <div class="stat-card has-tip ${metricColor(stats.lix, t.lix)}">
+      <div class="stat-value">${Math.round(stats.lix)}</div>
+      <div class="stat-label">LIX</div>
+      ${tip('lix', stats.lix)}
+    </div>
+    <div class="stat-card has-tip ${metricColor(stats.dialogueRatio, t.dialogueRatio)}">
+      <div class="stat-value">${Math.round(stats.dialogueRatio)}%</div>
+      <div class="stat-label">Dialogue</div>
+      ${tip('dialogueRatio', stats.dialogueRatio)}
+    </div>
+    <div class="stat-card has-tip ${metricColor(stats.passiveRatio, t.passiveRatio)}">
+      <div class="stat-value">${Math.round(stats.passiveRatio)}</div>
+      <div class="stat-label">Passive /1000w</div>
+      ${tip('passiveRatio', stats.passiveRatio)}
+    </div>
+    <div class="stat-card has-tip ${metricColor(stats.adverbRatio, t.adverbRatio)}">
+      <div class="stat-value">${Math.round(stats.adverbRatio)}</div>
+      <div class="stat-label">Adverbs /1000w</div>
+      ${tip('adverbRatio', stats.adverbRatio)}
+    </div>
+    <div class="stat-card has-tip ${metricColorInv(stats.ttr, t.ttr)}">
+      <div class="stat-value">${Math.round(stats.ttr)}</div>
+      <div class="stat-label">TTR</div>
+      ${tip('ttr', stats.ttr)}
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color:${stats.sentimentPolarity >= 0 ? 'var(--green)' : 'var(--red)'}">${stats.sentimentPolarity > 0 ? '+' : ''}${stats.sentimentPolarity}</div>
+      <div class="stat-label">Sentiment</div>
+    </div>
+    ` : '<div class="stat-card" style="grid-column:span 4;"><div class="stat-label">No text metrics for this file</div></div>'}
   </div>
 
-  <div class="stats" id="stats-grid"></div>
-  <div class="charts" id="charts-grid"></div>
-  <div id="app"></div>
-  <div id="toast" class="toast"></div>
+  <div class="charts">
+    <div class="chart-box">
+      <h2>Daily Words ${chartTip('fileDaily')}</h2>
+      <canvas id="fileDailyChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h2>Cumulative ${chartTip('fileCum')}</h2>
+      <canvas id="fileCumChart"></canvas>
+    </div>
+  </div>
 
-  <script>
-    // __PROGRESS_JSON__
-    
-    const state = {
-      progress: __PROGRESS_JSON__,
-      activeTab: 'all',
-      selectedFile: null,
-    }
+  <p style="font-size:0.7rem;color:var(--text-muted);margin-top:8px;">${selectedFile}</p>
+  `;
+}
 
-    function toggleSettings() {
-      const p = document.getElementById('settings-panel');
-      p.style.display = p.style.display === 'none' ? 'block' : 'none';
-      if (p.style.display === 'block') {
-        document.getElementById('set-daily').value = state.progress.dailyGoal || 0;
-        document.getElementById('set-total').value = state.progress.totalWordGoal || 0;
+function renderFileDetailCharts() {
+  const days = getFileDays(selectedFile);
+  renderFileDailyChart(days);
+  renderFileCumChart(days);
+}
+
+function renderFileDailyChart(days) {
+  const ctx = document.getElementById('fileDailyChart');
+  if (!ctx) return;
+  Chart.getChart('fileDailyChart')?.destroy();
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: days.map(d => d.date),
+      datasets: [
+        { label: 'Added', data: days.map(d => d.wordsAdded), backgroundColor: '#3fb95055', borderColor: '#3fb950', borderWidth: 1 },
+        { label: 'Removed', data: days.map(d => -d.wordsRemoved), backgroundColor: '#f8514955', borderColor: '#f85149', borderWidth: 1 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
       }
     }
+  });
+}
 
-    function saveSettings() {
-      const daily = parseInt(document.getElementById('set-daily').value);
-      const total = parseInt(document.getElementById('set-total').value);
-      if (!isNaN(daily)) state.progress.dailyGoal = daily;
-      if (!isNaN(total)) state.progress.totalWordGoal = total;
-      showToast('Settings saved locally');
-      refresh();
-    }
-
-    function refresh() {
-      const p = state.progress;
-      if (!p) {
-        document.getElementById('app').innerHTML = '<div class="error-state"><p>No data yet. Run <code>pnpm extract</code>.</p></div>';
-        return;
+function renderFileCumChart(days) {
+  const ctx = document.getElementById('fileCumChart');
+  if (!ctx) return;
+  Chart.getChart('fileCumChart')?.destroy();
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: days.map(d => d.date),
+      datasets: [{
+        label: 'Words', data: days.map(d => d.totalWords),
+        borderColor: '#58a6ff', backgroundColor: '#58a6ff22', fill: true, tension: 0.3, pointRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e' } } },
+      scales: {
+        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
       }
+    }
+  });
+}
 
-      // 1. Header Stats
-      const statsGrid = document.getElementById('stats-grid');
-      statsGrid.innerHTML = '';
-      const cards = [
-        { label: 'Total Words', val: p.totalWords, color: p.totalWords >= p.totalWordGoal ? 'green' : '' },
-        { label: 'Days Active', val: p.days.length, color: '' },
-        { label: 'Avg/Day', val: Math.round(p.totalWords / (p.days.length || 1)), color: '' },
-        { label: 'Edit Ratio', val: p.editRatio !== undefined ? p.editRatio + '%' : '—', color: '' },
-      ];
-      cards.forEach(c => {
-        statsGrid.innerHTML += `<div class="stat-card ${c.color}"><div class="stat-value">${c.val}</div><div class="stat-label">${c.label}</div></div>`;
-      });
+// ── Filtered day stats by section ──
+function getFilteredDays() {
+  if (activeSection === 'all') return progress.days;
 
-      // 2. Main Charts
-      const chartsGrid = document.getElementById('charts-grid');
-      chartsGrid.innerHTML = '<div class="chart-box"><h2>Daily Word Count</h2><canvas id="chart-daily"></canvas></div><div class="chart-box"><h2>Cumulative Words</h2><canvas id="chart-cumul"></canvas></div>';
-      
-      new Chart(document.getElementById('chart-daily'), {
-        type: 'bar',
-        data: {
-          labels: p.days.map(d => d.date),
-          datasets: [{ label: 'Words', data: p.days.map(d => d.words), backgroundColor: '#58a6ff' }]
+  // Recompute per-day stats from files matching the section
+  const dayMap = new Map();
+  for (const day of progress.days) {
+    const key = day.date;
+    if (!dayMap.has(key)) {
+      dayMap.set(key, { date: key, wordsAdded: 0, wordsRemoved: 0, totalWords: 0 });
+    }
+    const d = dayMap.get(key);
+    for (const f of day.files) {
+      if (f.section !== activeSection) continue;
+      d.wordsAdded += f.wordsAdded;
+      d.wordsRemoved += f.wordsRemoved;
+    }
+  }
+  const days = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date));
+  let running = 0;
+  for (const d of days) {
+    running += d.wordsAdded - d.wordsRemoved;
+    d.totalWords = running;
+  }
+  return days;
+}
+
+// ── Charts ──
+function renderCharts() {
+  renderDailyChart();
+  renderCumulativeChart();
+  renderStyleChart();
+  renderHoursChart();
+  renderVocabChart();
+  renderSentimentChart();
+}
+
+function renderDailyChart() {
+  const ctx = document.getElementById('dailyChart');
+  if (!ctx) return;
+  const days = getFilteredDays();
+  const labels = days.map(d => d.date);
+  Chart.getChart('dailyChart')?.destroy();
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Added', data: days.map(d => d.wordsAdded), backgroundColor: '#3fb95055', borderColor: '#3fb950', borderWidth: 1 },
+        { label: 'Removed', data: days.map(d => -d.wordsRemoved), backgroundColor: '#f8514955', borderColor: '#f85149', borderWidth: 1 },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#8b949e', maxTicksLimit: 14 }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
+      }
+    }
+  });
+}
+
+function renderCumulativeChart() {
+  const ctx = document.getElementById('cumulativeChart');
+  if (!ctx) return;
+  const days = getFilteredDays();
+  const labels = days.map(d => d.date);
+  const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
+  const isAll = activeSection === 'all';
+  const goalTarget = isAll ? progress.totalGoal : Math.round(progress.totalGoal * (totalWords / (progress.totalWords || 1)));
+  const paceBase = isAll ? progress.dailyGoal : Math.round(progress.dailyGoal * (totalWords / (progress.totalWords || 1)));
+  const est = progress.estimatedFinish || {};
+
+  // Build extended labels to later estimate date
+  const today = new Date();
+  const lastDate = days.length > 0 ? new Date(days[days.length - 1].date) : today;
+  const onTrackDate = est.onTrack ? new Date(est.onTrack) : null;
+  const pacedDate = est.paced ? new Date(est.paced) : null;
+  const endDate = onTrackDate && pacedDate ? new Date(Math.max(onTrackDate, pacedDate)) : (onTrackDate || pacedDate || new Date(today.getTime() + 30*86400000));
+  
+  const extLabels = [...labels];
+  const extActual = days.map(d => d.totalWords);
+  const extGoalPace = days.map((_, i) => paceBase * (i + 1));
+  const extCurrentPace = days.map((_, i) => paceBase * (i + 1)); // placeholder, recalc below
+  
+  // Current pace: average words/day so far
+  const dailyAvg = days.length > 0 ? totalWords / days.length : paceBase;
+  
+  // Extend labels day by day from lastDate+1 to endDate
+  const cursor = new Date(lastDate);
+  cursor.setDate(cursor.getDate() + 1);
+  let dIdx = days.length;
+  let projGoal = totalWords; // projected at daily goal pace
+  let projPace = totalWords; // projected at current pace
+  
+  while (cursor <= endDate) {
+    const dateStr = cursor.toISOString().slice(0, 10);
+    extLabels.push(dateStr);
+    extActual.push(null); // no actual data beyond today
+    projGoal = Math.min(projGoal + paceBase, goalTarget);
+    projPace = Math.min(projPace + dailyAvg, goalTarget);
+    extGoalPace.push(projGoal);
+    extCurrentPace.push(projPace);
+    cursor.setDate(cursor.getDate() + 1);
+    dIdx++;
+  }
+  
+  Chart.getChart('cumulativeChart')?.destroy();
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: extLabels,
+      datasets: [
+        {
+          label: 'Total Words', data: extActual,
+          borderColor: sectionColors[activeSection] || '#58a6ff', backgroundColor: (sectionColors[activeSection] || '#58a6ff') + '22',
+          fill: true, tension: 0.3, pointRadius: 3, spanGaps: false
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, x: { grid: { display: false }, ticks: { color: '#8b949e' } } },
-          plugins: { legend: { display: false } }
-        }
-      });
-
-      new Chart(document.getElementById('chart-cumul'), {
-        type: 'line',
-        data: {
-          labels: p.days.map(d => d.date),
-          datasets: [{ label: 'Words', data: p.days.map(d => d.totalWords), borderColor: '#3fb950', fill: true, backgroundColor: 'rgba(63,185,80,0.1)', tension: 0.1 }]
+        {
+          label: 'Goal', data: extLabels.map(() => goalTarget),
+          borderColor: '#d2991d', borderDash: [6, 4], pointRadius: 0, fill: false
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { grid: { color: '#30363d' }, ticks: { color: '#8b949e' } }, x: { grid: { display: false }, ticks: { color: '#8b949e' } } },
-          plugins: { legend: { display: false } }
+        {
+          label: est.onTrack ? 'Daily Goal \u2192 ' + est.onTrack : 'Daily Goal Pace', data: extGoalPace,
+          borderColor: '#3fb950', borderDash: [3, 6], pointRadius: 0, fill: false
+        },
+        {
+          label: est.paced ? 'Current Pace \u2192 ' + est.paced : 'Current Pace', data: extCurrentPace,
+          borderColor: '#58a6ff88', borderDash: [2, 8], pointRadius: 0, fill: false
         }
-      });
-
-      // 3. Detail Section
-      const app = document.getElementById('app');
-      app.innerHTML = '';
-
-      // Finish estimate
-      if (p.estimatedFinish) {
-        const est = p.estimatedFinish;
-        app.innerHTML += `<div class="chart-box" style="margin-bottom:24px;">
-          <h2>Estimated Finish</h2>
-          <div style="display:flex; gap:24px; align-items:center;">
-            <div><div class="stat-label">By Current Pace</div><div class="stat-value">${est.paced || '—'}</div></div>
-            <div><div class="stat-label">By Daily Goal</div><div class="stat-value">${est.onTrack || '—'}</div></div>
-          </div>
-        </div>`;
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#8b949e', maxTicksLimit: 14 }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
       }
+    }
+  });
+}
 
-      // File Breakdown
-      app.innerHTML += `<h2>Files <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted);">— click for per-file metrics</span></h2>`;
-      const table = document.createElement('table');
-      table.className = 'detail-table';
-      table.innerHTML = `<thead><tr><th>File</th><th class="num">Words</th><th class="num">%</th></tr></thead>`;
-      const tbody = document.createElement('tbody');
-      
-      Object.entries(p.files).sort((a, b) => b[1].words - a[1].words).forEach(([path, data]) => {
-        const pct = ((data.words / p.totalWords) * 100).toFixed(1);
-        const tr = document.createElement('tr');
-        tr.style.cursor = 'pointer';
-        tr.innerHTML = `<td>${path}</td><td class="num">${fmt(data.words)}</td><td class="num">${pct}%</td>`;
-        tr.onclick = () => showFileDrilldown(path);
-        tbody.appendChild(tr);
-      });
-      table.appendChild(tbody);
-      app.appendChild(table);
+// ── Chart tooltip info ──
+const CHART_TIPS = {
+  daily: {
+    title: 'Daily Words',
+    desc: 'Words added (green) and removed (red) per day. Each bar = one day of writing. Deleted files excluded from net count but still shown for historical context.',
+    axes: '<b>Y:</b> word count · <b>X:</b> date',
+  },
+  cumulative: {
+    title: 'Cumulative Progress',
+    desc: 'Total words over time. The blue line is your actual word count. Dashed yellow = total goal. Dashed green = pace needed to hit daily goal. If blue stays above green, you\'re on track.',
+    axes: '<b>Y:</b> total words · <b>X:</b> date',
+  },
+  style: {
+    title: 'Writing Style',
+    desc: 'Tracks sentence length and readability over time. Left Y-axis: words per sentence (blue) and LIX score (yellow). Right Y-axis: percentages for dialogue, passive voice, and adverb density.',
+    axes: '<b>Left Y:</b> words / score · <b>Right Y:</b> % / per 1000w · <b>X:</b> date',
+  },
+  hours: {
+    title: 'Writing Schedule',
+    desc: 'When commits happen by hour of day. Green bars = hours with commits. Empty gray bars = no activity. Helps identify your most productive writing times.',
+    axes: '<b>Y:</b> commit count · <b>X:</b> hour of day (24h)',
+  },
+  vocab: {
+    title: 'Vocabulary Richness',
+    desc: 'TTR (blue) = unique words ÷ total words. Honoré\'s R (green) = lexical density robust to text length. Top-100 word % (dashed yellow) = how much of text is common words. Higher TTR = richer vocabulary.',
+    axes: '<b>Left Y:</b> TTR · <b>Right Y:</b> score / % · <b>X:</b> date',
+  },
+  sentiment: {
+    title: 'Sentiment Trend',
+    desc: 'Emotional tone over time. Positive = bright/hopeful scenes. Negative = dark/conflict scenes. Polarity = (positive − negative) ÷ total sentiment words × 100. Range −100 to +100.',
+    axes: '<b>Y:</b> sentiment polarity · <b>X:</b> date',
+  },
+  characters: {
+    title: 'Character Mentions',
+    desc: 'Top characters by [[WikiLink]] mention count across all files. Shows who dominates the narrative. Click section tabs above to filter.',
+    axes: '<b>X:</b> mention count · <b>Y:</b> character name',
+  },
+  fileDaily: {
+    title: 'Daily Words',
+    desc: 'Words added and removed for this specific file only. Each bar = one day where this file was modified.',
+    axes: '<b>Y:</b> word count · <b>X:</b> date',
+  },
+  fileCum: {
+    title: 'Cumulative',
+    desc: 'Total words in this file over time. Track growth of individual chapters or character sheets.',
+    axes: '<b>Y:</b> total words · <b>X:</b> date',
+  },
+}
+
+function chartTip(key) {
+  const c = CHART_TIPS[key]
+  if (!c) return ''
+  return `<span class="has-tip" style="display:inline-block;margin-left:6px;font-size:0.8rem;color:var(--text-muted);cursor:help;vertical-align:middle;">ⓘ<span class="tip"><b>${c.title}</b><br>${c.desc}<br><br>${c.axes}</span></span>`
+}
+
+// ── Metric tooltip info ──
+const METRIC_INFO = {
+  sentenceLengthAvg: {
+    name: 'Avg Sentence Length',
+    desc: 'Average words per sentence. Short sentences create urgency and tension. Long sentences build atmosphere and flow.',
+    calc: 'Total words ÷ number of sentences',
+    bench: 'Hemingway 10 · Rowling 12 · Average fiction 15–20 · Faulkner 40+',
+  },
+  sentenceLengthStdDev: {
+    name: 'Sentence Variation',
+    desc: 'Standard deviation of sentence lengths. Higher values mean more varied rhythm. Too low sounds monotonous.',
+    calc: 'Standard deviation of words per sentence',
+    bench: 'Good fiction typically 5–10',
+  },
+  lix: {
+    name: 'LIX Readability',
+    desc: 'Readability score. Combines sentence length and long-word ratio. Lower = easier to read.',
+    calc: '(words ÷ sentences) + (long words × 100 ÷ words)',
+    bench: 'Harry Potter 25 · Da Vinci Code 30 · Newspapers 45 · Academic 55+',
+  },
+  dialogueRatio: {
+    name: 'Dialogue Ratio',
+    desc: 'Percentage of content lines containing dialogue (quoted speech). High ratio = talk-driven, low = description-driven.',
+    calc: 'Lines with quotes ÷ total content lines × 100',
+    bench: 'Hemingway 60% · Rowling 40% · Tolkien 30% · Thrillers often 50%+',
+  },
+  passiveRatio: {
+    name: 'Passive Voice',
+    desc: 'Passive verb forms per 1000 words. Passive voice creates distance and formality. Active voice is more engaging.',
+    calc: 'S-passives + periphrastic forms per 1000 words',
+    bench: 'Good fiction <2 · News articles 3–5 · Academic 10+',
+  },
+  adverbRatio: {
+    name: 'Adverb Density',
+    desc: 'Adverbs per 1000 words. Stephen King: "The road to hell is paved with adverbs." Fewer adverbs = stronger prose.',
+    calc: 'Adverbs (-vis, -ly, -ment forms + common list) per 1000 words',
+    bench: 'King recommends <5 · Bestsellers avg 8–12 · Purple prose 15+',
+  },
+  ttr: {
+    name: 'Type-Token Ratio',
+    desc: 'Vocabulary richness: unique words ÷ total words. Higher = more varied vocabulary. Sensitive to text length.',
+    calc: 'Unique words ÷ total words × 100',
+    bench: 'Shakespeare 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
+  },
+  honoreR: {
+    name: "Honoré's R",
+    desc: 'Lexical density measure robust to text length. Uses hapax legomena (words used only once). Higher = richer vocabulary.',
+    calc: '100 × log(words) ÷ (1 − hapax ÷ unique)',
+    bench: 'Rich literary prose 1000+ · Average fiction 600–900 · Simple text 400–600',
+  },
+  topWordFreq: {
+    name: 'Top-100 Word Density',
+    desc: 'Percentage of text made up by the 100 most frequent words. High values indicate repetition or limited vocabulary.',
+    calc: 'Occurrences of top 100 words ÷ total words × 100',
+    bench: 'Varied prose 45–55% · Average 55–60% · Repetitive 65%+',
+  },
+  sentimentPolarity: {
+    name: 'Sentiment Polarity',
+    desc: 'Balance of positive vs negative emotion words. Positive = hopeful/bright scenes, negative = dark/conflict scenes.',
+    calc: '(positive − negative) ÷ (positive + negative) × 100. Range −100 to +100.',
+    bench: 'Tragedies −50 to −20 · Thrillers −10 to +10 · Comedies +20 to +50',
+  },
+  editRatio: {
+    name: 'Edit Ratio',
+    desc: 'Percentage of word changes that were modifications (not pure additions). High ratio = heavy editing/rewriting phase.',
+    calc: 'Changed words ÷ total added words × 100',
+    bench: 'First draft 0–10% · Revision 15–30% · Polish 5–10%',
+  },
+}
+
+function tip(key, value) {
+  const m = METRIC_INFO[key]
+  if (!m) return ''
+  const level = getLevel(key, value)
+  return `
+  <span class="tip">
+    <b>${m.name}</b><br>
+    ${m.desc}<br><br>
+    <b>Formula:</b> ${m.calc}<br>
+    <b>Your score:</b> ${value} — <span style="color:${level.color}">${level.label}</span><br>
+    <div class="bench"><b>Benchmarks:</b><br>${m.bench.replace(/ · /g, '<br>')}</div>
+  </span>`
+}
+
+function getLevel(key, value) {
+  const t = progress?.thresholds || {}
+  const m = t[key]
+  if (!m) return { label: '', color: 'var(--text-muted)' }
+  if (m.goodMin !== undefined) {
+    if (value >= m.goodMin && value <= m.goodMax) return { label: 'Good', color: 'var(--green)' }
+    if (value >= m.warnMin && value <= m.warnMax) return { label: 'Warning', color: 'var(--orange)' }
+    return { label: 'Needs attention', color: 'var(--red)' }
+  }
+  if (key === 'ttr') {
+    if (value >= m.good) return { label: 'Good', color: 'var(--green)' }
+    if (value >= m.warn) return { label: 'Warning', color: 'var(--orange)' }
+    return { label: 'Needs attention', color: 'var(--red)' }
+  }
+  if (value <= m.good) return { label: 'Good', color: 'var(--green)' }
+  if (value <= m.warn) return { label: 'Warning', color: 'var(--orange)' }
+  return { label: 'Needs attention', color: 'var(--red)' }
+}
+
+// ── Compact metric strip ──
+function buildMetricStrip() {
+  const lastStats = getLatestTextStats();
+  if (!lastStats) return '';
+  const t = progress.thresholds || {};
+
+  const cards = [
+    { key: 'sentenceLengthAvg', label: 'Sentence Length', value: lastStats.sentenceLengthAvg, suffix: '' },
+    { key: 'lix', label: 'LIX', value: lastStats.lix, suffix: '' },
+    { key: 'dialogueRatio', label: 'Dialogue', value: lastStats.dialogueRatio, suffix: '%' },
+    { key: 'passiveRatio', label: 'Passive /1000w', value: lastStats.passiveRatio, suffix: '' },
+    { key: 'adverbRatio', label: 'Adverbs /1000w', value: lastStats.adverbRatio, suffix: '' },
+    { key: 'ttr', label: 'TTR', value: lastStats.ttr, suffix: '' },
+  ];
+
+  const colorFn = (key, value) => key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
+
+  return `
+  <h2 style="margin-bottom:4px;">${activeSection === 'all' ? 'Manuscript' : activeSection} Metrics</h2>
+  <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
+    ${cards.map(c => `
+    <div class="stat-card has-tip ${colorFn(c.key, c.value)}" style="padding:10px 14px;">
+      <div class="stat-value" style="font-size:1.25rem;">${Math.round(c.value)}${c.suffix}</div>
+      <div class="stat-label" style="font-size:0.7rem;">${c.label}</div>
+      ${tip(c.key, c.value)}
+    </div>`).join('')}
+    <div class="stat-card has-tip" style="padding:10px 14px;">
+      <div class="stat-value" style="font-size:1.25rem;">${Math.round(progress.editRatio)}%</div>
+      <div class="stat-label" style="font-size:0.7rem;">Edit Ratio</div>
+      ${tip('editRatio', progress.editRatio)}
+    </div>
+  </div>`;
+}
+function metricColor(value, t) {
+  if (!t) return '';
+  // Range metric: goodMin/goodMax/warnMin/warnMax
+  if (t.goodMin !== undefined) {
+    if (value >= t.goodMin && value <= t.goodMax) return 'green';
+    if (value >= t.warnMin && value <= t.warnMax) return 'orange';
+    return 'red';
+  }
+  // Threshold metric: good/warn (lower is better for ratios)
+  if (value <= t.good) return 'green';
+  if (value <= t.warn) return 'orange';
+  return 'red';
+}
+
+function metricColorInv(value, t) {
+  // Inverted: higher is better (TTR)
+  if (!t) return '';
+  if (value >= t.good) return 'green';
+  if (value >= t.warn) return 'orange';
+  return 'red';
+}
+
+function getLatestTextStats() {
+  // Find files with textStats in the active section across the latest day
+  for (let i = progress.days.length - 1; i >= 0; i--) {
+    const day = progress.days[i];
+    if (activeSection === 'all') {
+      if (day.textStats) return day.textStats;
+    } else {
+      const sectionFiles = day.files.filter(f => f.section === activeSection && f.textStats);
+      if (sectionFiles.length > 0) {
+        // Aggregate textStats from section files
+        return aggregateTextStats(sectionFiles.map(f => f.textStats));
+      }
+    }
+  }
+  return null;
+}
+
+function aggregateTextStats(statsList) {
+  if (!statsList.length) return null;
+  const first = statsList[0];
+  const keys = Object.keys(first).filter(k => k !== 'entities');
+  const result = {};
+  for (const key of keys) {
+    const values = statsList.map(s => s[key]).filter(v => typeof v === 'number');
+    if (values.length) result[key] = values.reduce((a, b) => a + b, 0) / values.length;
+  }
+  // Merge entities
+  result.entities = {};
+  for (const s of statsList) {
+    if (s.entities) {
+      for (const [name, count] of Object.entries(s.entities)) {
+        result.entities[name] = (result.entities[name] || 0) + count;
+      }
+    }
+  }
+  return result;
+}
+
+// ── Style chart (writing quality over time) ──
+function renderStyleChart() {
+  const ctx = document.getElementById('styleChart');
+  if (!ctx) return;
+  const daysWithStats = progress.days.filter((d) => d.textStats);
+  Chart.getChart('styleChart')?.destroy();
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daysWithStats.map((d) => d.date),
+      datasets: [
+        {
+          label: 'Sentence Length',
+          data: daysWithStats.map((d) => d.textStats.sentenceLengthAvg),
+          borderColor: '#58a6ff',
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        {
+          label: 'LIX',
+          data: daysWithStats.map((d) => d.textStats.lix),
+          borderColor: '#d2991d',
+          tension: 0.3,
+          yAxisID: 'y',
+        },
+        {
+          label: 'Dialogue %',
+          data: daysWithStats.map((d) => d.textStats.dialogueRatio),
+          borderColor: '#3fb950',
+          tension: 0.3,
+          yAxisID: 'y1',
+          borderDash: [4, 4],
+        },
+        {
+          label: 'Passive /1000w',
+          data: daysWithStats.map((d) => d.textStats.passiveRatio),
+          borderColor: '#f85149',
+          tension: 0.3,
+          yAxisID: 'y1',
+          borderDash: [2, 6],
+        },
+        {
+          label: 'Adverb /1000w',
+          data: daysWithStats.map((d) => d.textStats.adverbRatio),
+          borderColor: '#bc8cff',
+          tension: 0.3,
+          yAxisID: 'y1',
+          borderDash: [2, 6],
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e', font: { size: 10 } } } },
+      scales: {
+        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: { display: true, text: 'words / score', color: '#8b949e' },
+          ticks: { color: '#8b949e' },
+          grid: { color: '#21262d' },
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          title: { display: true, text: '% / per 1000w', color: '#8b949e' },
+          ticks: { color: '#8b949e' },
+          grid: { display: false },
+          min: 0,
+        },
+      },
+    },
+  });
+}
+
+// ── Commit hour heatmap ──
+function renderHoursChart() {
+  const ctx = document.getElementById('hoursChart');
+  if (!ctx) return;
+  const hours = progress.commitHours || {};
+  const labels = [...Array(24).keys()].map(h => String(h).padStart(2,'0') + ':00');
+  const data = [...Array(24).keys()].map(h => hours[h] || 0);
+  Chart.getChart('hoursChart')?.destroy();
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Commits', data,
+        backgroundColor: data.map(v => v > 0 ? '#3fb95088' : '#30363d'),
+        borderColor: '#3fb950', borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#8b949e', maxTicksLimit: 12 }, grid: { color: '#21262d' } },
+        y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' } }
+      }
+    }
+  });
+}
+
+// ── Vocabulary chart (TTR + Honoré's R) ──
+function renderVocabChart() {
+  const ctx = document.getElementById('vocabChart');
+  if (!ctx) return;
+  const daysWithStats = progress.days.filter((d) => d.textStats);
+  Chart.getChart('vocabChart')?.destroy();
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daysWithStats.map((d) => d.date),
+      datasets: [
+        {
+          label: 'TTR (x10)',
+          data: daysWithStats.map((d) => d.textStats.ttr),
+          borderColor: '#58a6ff', tension: 0.3, yAxisID: 'y',
+        },
+        {
+          label: 'Honoré\'s R',
+          data: daysWithStats.map((d) => d.textStats.honoreR),
+          borderColor: '#3fb950', tension: 0.3, yAxisID: 'y1',
+        },
+        {
+          label: 'Top-100 Word %',
+          data: daysWithStats.map((d) => d.textStats.topWordFreq),
+          borderColor: '#d2991d', tension: 0.3, yAxisID: 'y1', borderDash: [4, 4],
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+        y: {
+          type: 'linear', position: 'left',
+          title: { display: true, text: 'TTR', color: '#8b949e' },
+          ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, min: 0
+        },
+        y1: {
+          type: 'linear', position: 'right',
+          title: { display: true, text: 'score / %', color: '#8b949e' },
+          ticks: { color: '#8b949e' }, grid: { display: false }, min: 0
+        }
+      }
+    }
+  });
+}
+
+// ── Sentiment chart ──
+function renderSentimentChart() {
+  const ctx = document.getElementById('sentimentChart');
+  if (!ctx) return;
+  const daysWithStats = progress.days.filter((d) => d.textStats);
+  Chart.getChart('sentimentChart')?.destroy();
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: daysWithStats.map((d) => d.date),
+      datasets: [
+        {
+          label: 'Polarity (−100→+100)',
+          data: daysWithStats.map((d) => d.textStats.sentimentPolarity),
+          borderColor: '#bc8cff', backgroundColor: '#bc8cff22', fill: true,
+          tension: 0.3, pointRadius: 4,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: '#8b949e', font: { size: 11 } } },
+        annotation: false,
+      },
+      scales: {
+        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+        y: {
+          min: -100, max: 100,
+          ticks: { color: '#8b949e', stepSize: 25 },
+          grid: { color: '#21262d' },
+          title: { display: true, text: 'sentiment', color: '#8b949e' }
+        }
+      }
+    }
+  });
+}
+
+// ── Chapter word counts ──
+function buildChapterTable() {
+  const chapters = progress.chapterWordCounts || {};
+  const entries = Object.entries(chapters).sort((a,b) => b[1] - a[1]);
+  if (!entries.length) return '';
+  return `
+  <h2>Chapter Word Counts</h2>
+  <div style="overflow-x:auto;">
+  <table class="detail-table" style="margin-bottom:24px;">
+    <thead><tr><th>Chapter</th><th class="num">Words</th><th class="num">Progress</th></tr></thead>
+    <tbody>
+      ${entries.map(([path, wc]) => {
+        const name = path.split('/').pop().replace('.md','');
+        const pct = Math.round(wc / (progress.chapterTargetWords || 2500) * 100);
+        return `
+        <tr style="cursor:pointer;" onclick="switchFile('${path.replace(/'/g, "\\'")}')">
+          <td>${name}</td>
+          <td class="num">${fmt(wc)}</td>
+          <td class="num"><span style="display:inline-block;width:100px;height:6px;background:#21262d;border-radius:3px;vertical-align:middle;"><span style="display:block;height:100%;width:${Math.min(pct,100)}%;background:${pct>=100?'#3fb950':'#58a6ff'};border-radius:3px;"></span></span> ${pct}%</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>
+  </div>`;
+}
+
+// ── Settings ──
+function toggleSettings() {
+  if (!progress) return;
+  let panel = document.getElementById('settings-panel');
+  if (!panel) {
+    const t = progress.thresholds || {};
+    const row = (label, value) =>
+      `<div class="setting-row"><label>${label}</label><span class="setting-val">${value}</span></div>`
+    const thRow = (label, tObj) => {
+      if (!tObj) return ''
+      if (tObj.goodMin !== undefined) {
+        return row(label, `<span class="c-green">good</span> ${tObj.goodMin}–${tObj.goodMax} · <span class="c-orange">warn</span> ${tObj.warnMin}–${tObj.warnMax}`)
+      }
+      if (label.includes('TTR')) {
+        return row(label, `<span class="c-green">good ≥${tObj.good}</span> · <span class="c-orange">warn ≥${tObj.warn}</span> · <span class="c-red">below</span>`)
+      }
+      return row(label, `<span class="c-green">good ≤${tObj.good}</span> · <span class="c-orange">warn ≤${tObj.warn}</span> · <span class="c-red">above</span>`)
     }
 
-    function showFileDrilldown(path) {
-      const data = state.progress.files[path];
-      const app = document.getElementById('app');
-      
-      const drilldown = document.createElement('div');
-      drilldown.className = 'drilldown';
-      drilldown.innerHTML = `
-        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
-          <button class="btn" onclick="refresh()">← Back</button>
-          <h2 style="margin:0;">${path}</h2>
-        </div>
-        <div class="stats">
-          <div class="stat-card"><div class="stat-value">${fmt(data.words)}</div><div class="stat-label">Total Words</div></div>
-          <div class="stat-card"><div class="stat-value">${fmt(data.commits)}</div><div class="stat-label">Commits</div></div>
-          <div class="stat-card"><div class="stat-value">${Math.round(data.words / (data.commits || 1))}</div><div class="stat-label">Avg/Commit</div></div>
-        </div>
-      `;
-      
-      app.innerHTML = '';
-      app.appendChild(drilldown);
-    }
+    panel = document.createElement('div')
+    panel.id = 'settings-panel'
+    panel.className = 'settings-panel'
+    panel.innerHTML = `
+      <h2 style="margin-bottom:16px;">Settings</h2>
+      ${row('Daily Word Goal', progress.dailyGoal.toLocaleString())}
+      ${row('Total Word Goal', progress.totalGoal.toLocaleString())}
+      ${row('Chapter Target', (progress.chapterTargetWords || 2500).toLocaleString() + ' words')}
+      ${row('Text Analysis Section', progress.textAnalysisSection || 'Manuscript')}
+      ${row('Book Folder', progress.bookFolder || './Ruindykarna')}
+      ${row('Exclude Patterns', 'templates/**, **/.gitkeep, **/*.base, **/.sync-conflict*')}
 
-    function fmt(n) { return n.toLocaleString(); }
+      <h3 style="margin-top:20px;margin-bottom:8px;font-size:0.85rem;">Metric Thresholds</h3>
+      <p style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;">
+        <span class="c-green">●</span> Good · <span class="c-orange">●</span> Warning · <span class="c-red">●</span> Needs attention
+      </p>
+      ${thRow('Adverbs /1000w', t.adverbRatio)}
+      ${thRow('Passive /1000w', t.passiveRatio)}
+      ${thRow('TTR (vocabulary)', t.ttr)}
+      ${thRow('LIX readability', t.lix)}
+      ${thRow('Sentence Length', t.sentenceLengthAvg)}
+      ${thRow('Dialogue Ratio', t.dialogueRatio)}
+      ${thRow('Top-100 Word %', t.topWordFreq)}
 
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
-    }
+      <p style="margin-top:18px;font-size:0.75rem;color:var(--text-muted);">
+        Edit <code>bookprogress.config.json</code> to change these values, then run <code>pnpm extract</code>.
+      </p>
+    `
+    document.getElementById('app').before(panel)
+  }
+  panel.classList.toggle('open')
+}
 
-    refresh();
-  </script>
+// ── Helpers ──
+function fmt(n) { return n.toLocaleString(); }
+
+function calcStreak(days) {
+  if (!days.length) return 0;
+  let streak = 1;
+  for (let i = days.length - 1; i > 0; i--) {
+    const prev = new Date(days[i-1].date);
+    const curr = new Date(days[i].date);
+    const diff = (curr - prev) / 86400000;
+    if (diff <= 1.5) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function estimateFinish(days, goalTarget) {
+  if (!days.length) return { paced: null, onTrack: null }
+  const total = days[days.length - 1].totalWords
+  if (total >= goalTarget) return { paced: null, onTrack: null }
+  const remaining = goalTarget - total
+  const allTimeAvg = total / days.length
+  const pacedDays = allTimeAvg > 0 ? Math.ceil(remaining / allTimeAvg) : null
+  const onTrackDays = progress.dailyGoal > 0 ? Math.ceil(remaining / progress.dailyGoal) : null
+  const addDays = (d) => {
+    if (d === null) return null
+    const dt = new Date()
+    dt.setDate(dt.getDate() + d)
+    return dt.toISOString().slice(0, 10)
+  }
+  return { paced: addDays(pacedDays), onTrack: addDays(onTrackDays) }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Start ──
+document.addEventListener('mouseover', (e) => {
+  const tip = e.target.closest('.has-tip')?.querySelector?.('.tip')
+  if (!tip) return
+  const rect = tip.getBoundingClientRect()
+  const vw = window.innerWidth
+  const vh = window.innerHeight
+  tip.style.top = ''
+  tip.style.bottom = ''
+  tip.style.left = ''
+  tip.style.right = ''
+  tip.style.display = 'block'
+  const nr = tip.getBoundingClientRect()
+  tip.style.display = ''
+  // Vertical: prefer above unless too close to top
+  if (rect.top - nr.height - 8 < 0) {
+    tip.style.top = Math.min(rect.bottom + 8, vh - nr.height - 8) + 'px'
+  } else {
+    tip.style.bottom = (vh - rect.top + 8) + 'px'
+  }
+  // Horizontal: center on trigger, clamp to viewport
+  const maxW = Math.min(280, vw - 16)
+  tip.style.maxWidth = maxW + 'px'
+  tip.style.whiteSpace = 'normal'
+  tip.style.wordWrap = 'break-word'
+  let left = rect.left + rect.width / 2 - nr.width / 2
+  if (left < 8) left = 8
+  if (left + nr.width > vw - 8) left = vw - nr.width - 8
+  tip.style.left = left + 'px'
+})
+refresh();
+</script>
 </body>
 </html>
