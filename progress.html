@@ -3,6 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta property="og:title" content="Writing Tracker">
+<meta property="og:description" content="A book, in numbers. Follow my writing journey.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='2' fill='%23faf7f0'/><text x='8' y='12' text-anchor='middle' font-size='10' fill='%2322211f'>W</text></svg>">
 <title>Writing Tracker</title>
 <style>
@@ -235,6 +239,74 @@
   .chart-wrap { margin-top: 28px; width: 100%; }
   .chart-wrap canvas { max-height: 200px; }
 
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 101;
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-light);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  .sparkline {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 1px;
+    height: 24px;
+    margin-left: 12px;
+    vertical-align: middle;
+  }
+  .sparkline span {
+    width: 3px;
+    background: var(--ink-faint);
+    min-height: 2px;
+    border-radius: 1px;
+  }
+
+  .meta-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--ink-faint);
+    letter-spacing: 0.06em;
+    margin-top: 12px;
+  }
+
+  .share-btn {
+    background: none;
+    border: 1px solid var(--line);
+    color: var(--ink-faint);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    padding: 4px 10px;
+    cursor: pointer;
+    letter-spacing: 0.06em;
+  }
+  .share-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  body.dark {
+    --paper: #191410;
+    --paper-warm: #211c16;
+    --ink: #d4c5a9;
+    --ink-light: #8a7e6b;
+    --ink-faint: #5a5040;
+    --accent: #c9a96e;
+    --green: #7a9a6e;
+    --red: #b0685c;
+    --orange: #c4956a;
+    --line: #2d261e;
+    background-image: linear-gradient(var(--line) 1px, transparent 1px);
+  }
+
   .scroll-progress {
     position: fixed;
     right: 0; top: 0;
@@ -261,6 +333,7 @@
 <body>
 
 <div class="scroll-progress"><div class="thumb" id="scroll-thumb"></div></div>
+<button class="theme-toggle" onclick="toggleTheme()">dark</button>
 <div id="app"><div style="text-align:center;padding:80px 0;color:var(--ink-faint);font-style:italic;">Loading...</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -268,6 +341,33 @@
 // __PROGRESS_JSON__
 
 let progress = null;
+
+function toggleTheme() {
+  const btn = document.querySelector('.theme-toggle');
+  document.body.classList.toggle('dark');
+  btn.textContent = document.body.classList.contains('dark') ? 'light' : 'dark';
+  // Redraw charts with new colors
+  if (progress) {
+    const d = progress;
+    const days = d.days;
+    const totalWords = days[days.length - 1].totalWords;
+    renderProgressChart(days, totalWords, d);
+    renderHoursChart();
+  }
+}
+
+function share() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Writing Tracker', url });
+  } else {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.share-btn');
+      btn.textContent = 'copied';
+      setTimeout(() => btn.textContent = 'share', 2000);
+    });
+  }
+}
 
 function refresh() {
   try {
@@ -329,12 +429,31 @@ function metricColorInv(key, value, t) {
 
 function buildHero(d, days, totalWords, est) {
   const dailyAvg = Math.round(totalWords / days.length);
+  const author = d.authorName || 'I';
+  const readingTime = Math.round(totalWords / 250);
+  const lastUpdated = new Date().toISOString().slice(0, 10);
+  const sparkData = days.map(d => d.totalWords);
+  const sparkMax = Math.max(...sparkData, 1);
   return `
+    <section>
+      <div class="container fade" style="text-align:center;">
+        <h1 style="font-size:2.8rem;font-weight:400;letter-spacing:-0.02em;margin-bottom:8px;color:var(--ink);">${author.split(' ')[0]} Writes a Book</h1>
+        <p style="color:var(--ink-light);font-style:italic;font-size:1.1rem;margin-bottom:48px;">Follow my writing journey</p>
+      </div>
+    </section>
+
     <section>
       <div class="container fade">
         <div class="chapter-num">A book, in numbers</div>
-        <div class="big-number">${fmt(totalWords)} <em>words</em></div>
+        <div class="big-number">${fmt(totalWords)} <em>words</em>
+          <span class="sparkline">${sparkData.slice(-30).map(v => `<span style="height:${Math.max(v/sparkMax*24, 2)}px"></span>`).join('')}</span>
+        </div>
         <div class="sub">across ${pp(totalWords)} pages &middot; ${days.length} days of writing</div>
+        <div class="meta-row">
+          <span>${readingTime} min read</span>
+          <span>updated ${lastUpdated}</span>
+          <button class="share-btn" onclick="share()">share</button>
+        </div>
         <div class="reveal reveal-d1" style="margin-top:28px;">
           <div class="stat-line"><span class="lbl">Daily average</span><span class="num">${fmt(dailyAvg)}</span></div>
           <div class="stat-line"><span class="lbl">At current pace, finished by</span><span class="num" style="color:var(--accent)">${est.paced || '--'}</span></div>
@@ -520,6 +639,13 @@ function render() {
 function renderProgressChart(days, totalWords, d) {
   const ctx = document.getElementById('progressChart');
   if (!ctx) return;
+  const dark = document.body.classList.contains('dark');
+  const ink = dark ? '#d4c5a9' : '#22211f';
+  const grid = dark ? '#2d261e' : '#e8e3d7';
+  const faint = dark ? '#5a5040' : '#b8b5ad';
+  const goalCol = dark ? '#3a3228' : '#d8d3c7';
+  const greenCol = dark ? '#7a9a6e33' : '#c0d6b8';
+  const goldCol = dark ? '#c9a96e33' : '#d4c8a8';
   const labels = days.map(d => d.date);
   const paceBase = d.dailyGoal;
   const est = d.estimatedFinish || {};
@@ -548,10 +674,10 @@ function renderProgressChart(days, totalWords, d) {
     data: {
       labels: extLabels,
       datasets: [
-        { data: extActual, borderColor: '#22211f', borderWidth: 1.5, pointRadius: 1, pointBackgroundColor: '#22211f', tension: 0.2, spanGaps: false },
-        { data: extLabels.map(() => d.totalGoal), borderColor: '#d8d3c7', borderWidth: 1, borderDash: [4, 8], pointRadius: 0 },
-        { data: extGoal, borderColor: '#c0d6b8', borderWidth: 1, borderDash: [2, 6], pointRadius: 0 },
-        { data: extPace, borderColor: '#d4c8a8', borderWidth: 1, borderDash: [1, 8], pointRadius: 0 }
+        { data: extActual, borderColor: ink, borderWidth: 1.5, pointRadius: 1, pointBackgroundColor: ink, tension: 0.2, spanGaps: false },
+        { data: extLabels.map(() => d.totalGoal), borderColor: goalCol, borderWidth: 1, borderDash: [4, 8], pointRadius: 0 },
+        { data: extGoal, borderColor: greenCol, borderWidth: 1, borderDash: [2, 6], pointRadius: 0 },
+        { data: extPace, borderColor: goldCol, borderWidth: 1, borderDash: [1, 8], pointRadius: 0 }
       ]
     },
     options: {
@@ -559,8 +685,8 @@ function renderProgressChart(days, totalWords, d) {
       animation: { duration: 1200, easing: 'easeInOutQuart' },
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#b8b5ad', maxTicksLimit: 8, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: '#e8e3d7' } },
-        y: { ticks: { color: '#b8b5ad', font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: '#e8e3d7' } }
+        x: { ticks: { color: faint, maxTicksLimit: 8, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } },
+        y: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } }
       }
     }
   });
@@ -569,6 +695,10 @@ function renderProgressChart(days, totalWords, d) {
 function renderHoursChart() {
   const ctx = document.getElementById('hoursChart');
   if (!ctx) return;
+  const dark = document.body.classList.contains('dark');
+  const ink = dark ? '#c9a96e' : '#8b6914';
+  const grid = dark ? '#2d261e' : '#e8e3d7';
+  const faint = dark ? '#5a5040' : '#b8b5ad';
   const hours = progress.commitHours || {};
   const labels = Array.from({ length: 24 }, (_, i) => i);
   Chart.getChart('hoursChart')?.destroy();
@@ -578,7 +708,7 @@ function renderHoursChart() {
       labels: labels.map(h => `${h}`),
       datasets: [{
         data: labels.map(h => hours[h] || 0),
-        backgroundColor: labels.map(h => (hours[h] || 0) > 0 ? '#8b6914' : '#e8e3d7'),
+        backgroundColor: labels.map(h => (hours[h] || 0) > 0 ? ink : grid),
         borderWidth: 0, borderRadius: 0
       }]
     },
@@ -587,8 +717,8 @@ function renderHoursChart() {
       animation: { duration: 800, easing: 'easeInOutQuart' },
       plugins: { legend: { display: false } },
       scales: {
-        x: { ticks: { color: '#b8b5ad', font: { family: 'IBM Plex Mono', size: 9 } }, grid: { display: false } },
-        y: { ticks: { color: '#b8b5ad', font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: '#e8e3d7' } }
+        x: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } }
       }
     }
   });

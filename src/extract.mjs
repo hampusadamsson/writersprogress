@@ -5,9 +5,9 @@ import { loadConfig } from './lib/config.mjs'
 
 const OUTPUT_JSON = resolve('data/progress.json')
 const OUTPUT_HTML = resolve('data/index.html')
-const OUTPUT_HTML2 = resolve('data/index2.html')
+const OUTPUT_HTML2 = resolve('data/progress.html')
 const TEMPLATE = resolve('index.html')
-const TEMPLATE2 = resolve('index2.html')
+const TEMPLATE2 = resolve('progress.html')
 const FALLBACK_TEMPLATE = resolve('src/template.html')
 
 const HELP = `Writing Tracker — track your writing progress through git history
@@ -147,12 +147,12 @@ async function generateHtml(report) {
   await writeFile(OUTPUT_HTML, html)
   console.log(`  Wrote ${OUTPUT_HTML}`)
 
-  // Also generate index2.html if template exists
+  // Also generate progress.html if template exists
   let template2
   try {
     template2 = await readFile(TEMPLATE2, 'utf-8')
   } catch {
-    // index2.html is optional
+    // progress.html is optional
   }
   if (template2) {
     const html2 = template2.replace(

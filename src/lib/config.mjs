@@ -8,6 +8,8 @@ const DEFAULTS = {
   textAnalysisSection: 'Manuscript',
   trackPatterns: ['**/*.md'],
   excludePatterns: ['templates/**', '**/.gitkeep', '**/*.base', '**/.sync-conflict*'],
+  wordsPerPage: 300,
+  authorName: 'Hampus Adamsson',
 }
 
 /**

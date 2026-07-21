@@ -248,6 +248,7 @@ export async function buildReport(cwd, config) {
     totalGoal: config.totalWordGoal,
     chapterTargetWords: config.chapterTargetWords,
     wordsPerPage: config.wordsPerPage,
+    authorName: config.authorName,
     textAnalysisSection: config.textAnalysisSection,
     estimatedFinish,
     perSection,
