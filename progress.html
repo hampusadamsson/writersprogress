@@ -42,7 +42,10 @@
       linear-gradient(var(--line) 1px, transparent 1px);
     background-size: 100% 28px;
     background-attachment: fixed;
+    scroll-snap-type: y mandatory;
   }
+
+  html { scroll-behavior: smooth; }
 
   section {
     min-height: 100vh;
@@ -52,6 +55,8 @@
     padding: 80px 24px;
     position: relative;
     will-change: transform;
+    overflow: hidden;
+    scroll-snap-align: start;
   }
   section + section { border-top: 1px solid var(--line); }
   html { scroll-behavior: smooth; }
@@ -83,6 +88,7 @@
   }
   .visible h2 { opacity: 1; transform: translateY(0); }
   h2 em { font-style: italic; color: var(--accent); }
+  h1 em { font-style: italic; color: var(--accent); }
   h2 strong { font-weight: 700; }
 
   .sub {
@@ -140,17 +146,21 @@
   .stat-line {
     display: flex;
     align-items: baseline;
-    gap: 12px;
-    margin-bottom: 4px;
+    gap: 6px;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
   }
   .stat-line .num {
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
-    font-size: 1rem;
-    color: var(--ink);
-    min-width: 85px;
+    font-family: 'Crimson Text', serif;
+    font-size: 1.1rem;
+    color: var(--accent);
+    min-width: 100px;
     text-align: right;
   }
-  .stat-line .lbl { font-size: 0.9rem; color: var(--ink-light); }
+  .stat-line .lbl {
+    font-size: 1.1rem;
+    color: var(--ink-light);
+  }
 
   .section-grid {
     display: grid;
@@ -322,7 +332,7 @@
   }
 
   @media (max-width: 640px) {
-    section { padding: 48px 16px; min-height: auto; }
+    section { padding: 48px 16px; min-height: 100vh; }
     .big-number { font-size: 2.8rem; }
     h2 { font-size: 1.6rem; }
     .scroll-progress { display: none; }
@@ -430,14 +440,13 @@ function metricColorInv(key, value, t) {
 function buildHero(d, days, totalWords, est) {
   const dailyAvg = Math.round(totalWords / days.length);
   const author = d.authorName || 'I';
-  const readingTime = Math.round(totalWords / 250);
   const lastUpdated = new Date().toISOString().slice(0, 10);
   const sparkData = days.map(d => d.totalWords);
   const sparkMax = Math.max(...sparkData, 1);
   return `
     <section>
       <div class="container fade" style="text-align:center;">
-        <h1 style="font-size:2.8rem;font-weight:400;letter-spacing:-0.02em;margin-bottom:8px;color:var(--ink);">${author.split(' ')[0]} Writes a Book</h1>
+        <h1 style="font-size:2.8rem;font-weight:400;letter-spacing:-0.02em;margin-bottom:8px;color:var(--ink);">${author.split(' ')[0]} Writes a <em>Book</em></h1>
         <p style="color:var(--ink-light);font-style:italic;font-size:1.1rem;margin-bottom:48px;">Follow my writing journey</p>
       </div>
     </section>
@@ -450,9 +459,7 @@ function buildHero(d, days, totalWords, est) {
         </div>
         <div class="sub">across ${pp(totalWords)} pages &middot; ${days.length} days of writing</div>
         <div class="meta-row">
-          <span>${readingTime} min read</span>
           <span>updated ${lastUpdated}</span>
-          <button class="share-btn" onclick="share()">share</button>
         </div>
         <div class="reveal reveal-d1" style="margin-top:28px;">
           <div class="stat-line"><span class="lbl">Daily average</span><span class="num">${fmt(dailyAvg)}</span></div>
@@ -515,7 +522,7 @@ function buildStyle(d, stats, t) {
   }
 
   const metrics = [
-    { key: 'sentenceLengthAvg', label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: ' words', domain: [0, 45],
+    { key: 'sentenceLengthAvg', label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: 'w', domain: [0, 45],
       marks: [{ v: 10, n: 'Hemingway' }, { v: 12, n: 'Rowling' }, { v: 17, n: 'Avg fiction' }, { v: 40, n: 'Faulkner' }],
       note: m => `My sentences average ${m.value}${m.unit}. Hemingway wrote at 10. Rowling at 12. Faulkner stretched past 40. Short sentences create urgency. Long ones build atmosphere.` },
     { key: 'lix', label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20, 65],
@@ -524,10 +531,10 @@ function buildStyle(d, stats, t) {
     { key: 'dialogueRatio', label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0, 100],
       marks: [{ v: 30, n: 'Tolkien' }, { v: 40, n: 'Rowling' }, { v: 60, n: 'Hemingway' }],
       note: m => `${m.value}% of my lines are dialogue. Tolkien sat at 30%, Rowling 40%, Hemingway 60%. Dialogue-heavy scenes move faster. Low dialogue means more narration and description.` },
-    { key: 'passiveRatio', label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '/1000w', domain: [0, 12],
+    { key: 'passiveRatio', label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0, 12],
       marks: [{ v: 2, n: 'Good fiction' }, { v: 4, n: 'News' }, { v: 10, n: 'Academic' }],
       note: m => `${m.value} passives per 1000 words. Good fiction stays under 2. News runs 3 to 5. Academic texts hit 10. Passive voice obscures who acts. Active voice is direct and clear.` },
-    { key: 'adverbRatio', label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '/1000w', domain: [0, 18],
+    { key: 'adverbRatio', label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '', domain: [0, 18],
       marks: [{ v: 5, n: 'King' }, { v: 10, n: 'Bestsellers' }, { v: 15, n: 'Purple prose' }],
       note: m => `${m.value} adverbs per 1000 words. King keeps under 5. Bestsellers average 10. Purple prose hits 15. Adverbs prop up weak verbs. A strong verb needs no modifier.` },
     { key: 'ttr', label: 'Type-Token Ratio', value: Math.round(stats.ttr), unit: '', domain: [30, 90],
@@ -606,6 +613,10 @@ function buildSchedule() {
         <div class="sub">When the words find their way onto the page</div>
         <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="hoursChart"></canvas></div></div>
         <p class="note">I commit most often at ${peakHour(progress.commitHours)}:00. That is my window. ${totalCommitDays(progress.commitHours)} commits across ${Object.keys(progress.commitHours).length} distinct hours.</p>
+        <div style="margin-top:40px;text-align:center;">
+          <button class="share-btn" onclick="share()">share this page</button>
+          <p style="color:var(--ink-faint);font-size:0.7rem;margin-top:24px;font-style:italic;">Want to know when it is finished? <a href="mailto:hampus.adamsson@gmail.com" style="color:var(--accent);">Send me an email</a></p>
+        </div>
       </div>
     </section>`;
 }
