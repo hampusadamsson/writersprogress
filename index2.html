@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='2' fill='%23faf7f0'/><text x='8' y='12' text-anchor='middle' font-size='10' fill='%2322211f'>W</text></svg>">
+<title>Writing Tracker</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root {
+    --paper: #faf7f0;
+    --paper-warm: #f5f0e6;
+    --ink: #22211f;
+    --ink-light: #5c5a55;
+    --ink-faint: #b8b5ad;
+    --accent: #8b6914;
+    --green: #4a6741;
+    --red: #9b4e43;
+    --orange: #a0683a;
+    --line: #e8e3d7;
+    --transition-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  body {
+    font-family: 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    font-size: 17px;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px);
+    background-size: 100% 28px;
+    background-attachment: fixed;
+  }
+
+  section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 24px;
+    position: relative;
+    will-change: transform;
+  }
+  section + section { border-top: 1px solid var(--line); }
+  html { scroll-behavior: smooth; }
+  .container { max-width: 600px; width: 100%; margin: 0 auto; }
+
+  .chapter-num {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    color: var(--ink-faint);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.8s var(--transition-ease), transform 0.8s var(--transition-ease);
+  }
+  .visible .chapter-num { opacity: 1; transform: translateY(0); }
+
+  h2 {
+    font-size: 2.2rem;
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s 0.1s var(--transition-ease), transform 0.8s 0.1s var(--transition-ease);
+  }
+  .visible h2 { opacity: 1; transform: translateY(0); }
+  h2 em { font-style: italic; color: var(--accent); }
+  h2 strong { font-weight: 700; }
+
+  .sub {
+    font-size: 1rem;
+    color: var(--ink-light);
+    font-style: italic;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.8s 0.2s var(--transition-ease), transform 0.8s 0.2s var(--transition-ease);
+  }
+  .visible .sub { opacity: 1; transform: translateY(0); }
+
+  .note {
+    color: var(--ink-light);
+    font-style: italic;
+    max-width: 420px;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.8s 0.5s var(--transition-ease), transform 0.8s 0.5s var(--transition-ease);
+  }
+  .visible .note { opacity: 1; transform: translateY(0); }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.7s var(--transition-ease), transform 0.7s var(--transition-ease);
+  }
+  .visible .reveal { opacity: 1; transform: translateY(0); }
+  .reveal-d1 { transition-delay: 0.15s; }
+  .reveal-d2 { transition-delay: 0.25s; }
+  .reveal-d3 { transition-delay: 0.35s; }
+  .reveal-d4 { transition-delay: 0.45s; }
+  .reveal-d5 { transition-delay: 0.55s; }
+
+  .big-number {
+    font-family: 'Crimson Text', serif;
+    font-size: clamp(3.5rem, 9vw, 6rem);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 1s 0.05s var(--transition-ease), transform 1s 0.05s var(--transition-ease);
+  }
+  .visible .big-number { opacity: 1; transform: translateY(0); }
+  .big-number em { font-style: italic; color: var(--accent); }
+
+  .stat-line {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .stat-line .num {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 1rem;
+    color: var(--ink);
+    min-width: 85px;
+    text-align: right;
+  }
+  .stat-line .lbl { font-size: 0.9rem; color: var(--ink-light); }
+
+  .section-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-bottom: 36px;
+  }
+  .section-cell {
+    background: var(--paper);
+    padding: 20px 16px;
+  }
+  .section-cell .val {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  .section-cell .pages {
+    font-size: 0.8rem;
+    color: var(--accent);
+    margin-top: 2px;
+  }
+  .section-cell .lbl {
+    font-size: 0.7rem;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+  }
+
+  .chapter-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .chapter-item {
+    background: var(--paper);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .chapter-item .title {
+    flex: 1;
+    font-size: 0.95rem;
+    font-style: italic;
+    color: var(--ink);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .chapter-item .bar {
+    width: 100px;
+    height: 2px;
+    background: var(--line);
+    position: relative;
+  }
+  .chapter-item .bar span {
+    position: absolute;
+    left: 0; top: 0; height: 100%;
+    background: var(--accent);
+    transition: width 1.2s var(--transition-ease);
+  }
+  .chapter-item .num {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.65rem;
+    color: var(--ink-faint);
+    min-width: 75px;
+    text-align: right;
+  }
+
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: 0.65rem;
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    color: var(--ink-light);
+    letter-spacing: 0.04em;
+    background: var(--paper);
+    transition: border-color 0.4s ease, color 0.4s ease;
+  }
+  .chip.good { border-color: #c0d6b8; color: var(--green); }
+  .chip.warn { border-color: #e8d4b8; color: var(--orange); }
+  .chip.bad { border-color: #e8c0b8; color: var(--red); }
+
+  .chart-wrap { margin-top: 28px; width: 100%; }
+  .chart-wrap canvas { max-height: 200px; }
+
+  .scroll-progress {
+    position: fixed;
+    right: 0; top: 0;
+    width: 1px;
+    height: 100%;
+    background: var(--line);
+    z-index: 100;
+  }
+  .scroll-progress .thumb {
+    width: 100%;
+    background: var(--accent);
+    transition: height 0.15s linear;
+  }
+
+  @media (max-width: 640px) {
+    section { padding: 48px 16px; min-height: auto; }
+    .big-number { font-size: 2.8rem; }
+    h2 { font-size: 1.6rem; }
+    .scroll-progress { display: none; }
+    body { background-size: 100% 24px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scroll-progress"><div class="thumb" id="scroll-thumb"></div></div>
+<div id="app"><div style="text-align:center;padding:80px 0;color:var(--ink-faint);font-style:italic;">Loading...</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script>
+// __PROGRESS_JSON__
+
+let progress = null;
+
+function refresh() {
+  try {
+    if (typeof __PROGRESS_JSON__ === 'undefined') throw new Error('No data. Run: pnpm extract');
+    progress = __PROGRESS_JSON__;
+    render();
+  } catch (err) {
+    document.getElementById('app').innerHTML = `<div style="text-align:center;padding:80px 0;color:var(--red);font-style:italic;">${err.message}</div>`;
+  }
+}
+
+const fmt = (n) => n.toLocaleString();
+const pp = (w) => Math.round(w / (progress.wordsPerPage || 300));
+const getLatestStats = () => {
+  for (let i = progress.days.length - 1; i >= 0; i--) {
+    if (progress.days[i].textStats) return progress.days[i].textStats;
+  }
+  return null;
+};
+
+function maxSection(sections) {
+  const entries = Object.entries(sections);
+  if (!entries.length) return '--';
+  return entries.reduce((a, b) => a[1].words > b[1].words ? a : b)[0];
+}
+function minSection(sections) {
+  const entries = Object.entries(sections);
+  if (!entries.length) return '--';
+  return entries.reduce((a, b) => a[1].words < b[1].words ? a : b)[0];
+}
+function peakHour(hours) {
+  if (!hours || !Object.keys(hours).length) return '--';
+  return Object.entries(hours).reduce((a, b) => a[1] > b[1] ? a : b)[0];
+}
+function totalCommitDays(hours) {
+  if (!hours) return 0;
+  return Object.values(hours).reduce((a, b) => a + b, 0);
+}
+
+function metricColor(key, value, t) {
+  if (!t || !t[key]) return '';
+  const m = t[key];
+  if (m.goodMin !== undefined) {
+    if (value >= m.goodMin && value <= m.goodMax) return 'good';
+    if (value >= m.warnMin && value <= m.warnMax) return 'warn';
+    return 'bad';
+  }
+  if (value <= m.good) return 'good';
+  if (value <= m.warn) return 'warn';
+  return 'bad';
+}
+function metricColorInv(key, value, t) {
+  if (!t || !t[key]) return '';
+  const m = t[key];
+  if (value >= m.good) return 'good';
+  if (value >= m.warn) return 'warn';
+  return 'bad';
+}
+
+function buildHero(d, days, totalWords, est) {
+  const dailyAvg = Math.round(totalWords / days.length);
+  return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">A book, in numbers</div>
+        <div class="big-number">${fmt(totalWords)} <em>words</em></div>
+        <div class="sub">across ${pp(totalWords)} pages &middot; ${days.length} days of writing</div>
+        <div class="reveal reveal-d1" style="margin-top:28px;">
+          <div class="stat-line"><span class="lbl">Daily average</span><span class="num">${fmt(dailyAvg)}</span></div>
+          <div class="stat-line"><span class="lbl">At current pace, finished by</span><span class="num" style="color:var(--accent)">${est.paced || '--'}</span></div>
+          <div class="stat-line"><span class="lbl">On daily goal, finished by</span><span class="num">${est.onTrack || '--'}</span></div>
+        </div>
+        <p class="note">At this pace, I finish by ${est.paced || '--'}. The book stands at ${pp(totalWords)} pages. ${pp(d.totalGoal - totalWords)} to go.</p>
+      </div>
+    </section>`;
+}
+
+function buildProgress(d, totalWords) {
+  const pct = Math.round(totalWords / d.totalGoal * 100);
+  return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter I</div>
+        <h2>The <strong>${pct}%</strong> <em>mark</em></h2>
+        <div class="sub">${fmt(totalWords)} of ${fmt(d.totalGoal)} toward the final page</div>
+        <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="progressChart"></canvas></div></div>
+        <p class="note">${fmt(totalWords)} words written of ${fmt(d.totalGoal)}. I am ${pct}% through. ${fmt(d.totalGoal - totalWords)} words remain.</p>
+      </div>
+    </section>`;
+}
+
+function buildSections(d, totalWords) {
+  const sections = d.perSection || {};
+  return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter II</div>
+        <h2><em>Where</em> the words <strong>live</strong></h2>
+        <div class="sub">${Object.keys(sections).length} sections across my manuscript</div>
+        <div class="reveal reveal-d1">
+          <div class="section-grid">
+            ${Object.entries(sections).map(([name, info]) => `
+              <div class="section-cell">
+                <div class="val">${fmt(info.words)}</div>
+                <div class="pages">${pp(info.words)} pp.</div>
+                <div class="lbl">${name} &middot; ${info.files} files</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <p class="note">${Object.keys(sections).length} sections hold ${fmt(totalWords)} words. The largest is ${maxSection(sections)}. ${minSection(sections)} is still growing.</p>
+      </div>
+    </section>`;
+}
+
+function buildStyle(d, stats, t) {
+  if (!stats) {
+    return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter IV</div>
+        <h2>The <em>craft</em> of <strong>prose</strong></h2>
+        <div class="sub">No manuscript data yet</div>
+      </div>
+    </section>`;
+  }
+
+  const metrics = [
+    { key: 'sentenceLengthAvg', label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: ' words', domain: [0, 45],
+      marks: [{ v: 10, n: 'Hemingway' }, { v: 12, n: 'Rowling' }, { v: 17, n: 'Avg fiction' }, { v: 40, n: 'Faulkner' }],
+      note: m => `My sentences average ${m.value}${m.unit}. Hemingway wrote at 10. Rowling at 12. Faulkner stretched past 40. Short sentences create urgency. Long ones build atmosphere.` },
+    { key: 'lix', label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20, 65],
+      marks: [{ v: 25, n: 'Harry Potter' }, { v: 30, n: 'Da Vinci Code' }, { v: 45, n: 'Newspapers' }, { v: 55, n: 'Academic' }],
+      note: m => `My LIX is ${m.value}. Potter scores 25, newspapers 45, academic texts 55. LIX measures readability: lower means easier to read, higher means more complex sentences and longer words.` },
+    { key: 'dialogueRatio', label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0, 100],
+      marks: [{ v: 30, n: 'Tolkien' }, { v: 40, n: 'Rowling' }, { v: 60, n: 'Hemingway' }],
+      note: m => `${m.value}% of my lines are dialogue. Tolkien sat at 30%, Rowling 40%, Hemingway 60%. Dialogue-heavy scenes move faster. Low dialogue means more narration and description.` },
+    { key: 'passiveRatio', label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '/1000w', domain: [0, 12],
+      marks: [{ v: 2, n: 'Good fiction' }, { v: 4, n: 'News' }, { v: 10, n: 'Academic' }],
+      note: m => `${m.value} passives per 1000 words. Good fiction stays under 2. News runs 3 to 5. Academic texts hit 10. Passive voice obscures who acts. Active voice is direct and clear.` },
+    { key: 'adverbRatio', label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '/1000w', domain: [0, 18],
+      marks: [{ v: 5, n: 'King' }, { v: 10, n: 'Bestsellers' }, { v: 15, n: 'Purple prose' }],
+      note: m => `${m.value} adverbs per 1000 words. King keeps under 5. Bestsellers average 10. Purple prose hits 15. Adverbs prop up weak verbs. A strong verb needs no modifier.` },
+    { key: 'ttr', label: 'Type-Token Ratio', value: Math.round(stats.ttr), unit: '', domain: [30, 90],
+      marks: [{ v: 35, n: 'Simple prose' }, { v: 47, n: 'Avg fiction' }, { v: 55, n: 'Hemingway' }, { v: 70, n: 'Joyce' }, { v: 85, n: 'Shakespeare' }],
+      note: m => `My TTR is ${m.value}. Simple prose sits at 35, average fiction at 47, Hemingway at 55, Joyce at 70, Shakespeare at 85. Type-token ratio measures unique words divided by total words. Higher means richer vocabulary.` },
+    { key: 'editRatio', label: 'Edit ratio', value: d.editRatio, unit: '%', domain: [0, 35],
+      marks: [{ v: 5, n: 'First draft' }, { v: 20, n: 'Revision' }, { v: 30, n: 'Polish' }],
+      note: m => `${m.value}% of my word count is edits. First drafts stay under 5%. Revision runs 15 to 30%. Polish drops below 10%. High edit ratio means heavy rewriting. Low means fresh drafting.` },
+  ];
+
+  const chapters = ['IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
+
+  return metrics.map((m, i) => {
+    const pct = Math.min((m.value - m.domain[0]) / (m.domain[1] - m.domain[0]) * 100, 100);
+    return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter ${chapters[i]}</div>
+        <h2><em>${m.label}</em></h2>
+        <div class="sub" style="font-size:1.1rem;">${m.value}${m.unit}</div>
+        <div class="reveal reveal-d1" style="margin-top:24px;">
+          <div style="position:relative;height:48px;margin-bottom:8px;">
+            <div style="position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line);"></div>
+            <div style="position:absolute;left:0;top:50%;height:2px;background:var(--ink);width:${pct}%;transition:width 1.2s var(--transition-ease);"></div>
+            <div style="position:absolute;left:${pct}%;top:50%;margin-left:-6px;margin-top:-7px;width:12px;height:14px;background:var(--ink);border-radius:2px;"></div>
+            ${m.marks.map((mk, mi) => {
+              const mpct = (mk.v - m.domain[0]) / (m.domain[1] - m.domain[0]) * 100;
+              const offsets = ['-20px', '-32px', '28px', '40px'];
+              const top = offsets[mi % offsets.length];
+              return '<div style="position:absolute;left:' + mpct + '%;top:50%;margin-top:-10px;width:1px;height:20px;background:var(--ink-faint);"><span style="position:absolute;top:' + top + ';left:3px;font-family:IBM Plex Mono,monospace;font-size:0.5rem;color:var(--ink-faint);white-space:nowrap;">' + mk.n + ' ' + mk.v + m.unit + '</span></div>';
+            }).join('')}
+          </div>
+        </div>
+        <p class="note">${m.note(m)}</p>
+      </div>
+    </section>`;
+  }).join('');
+}
+
+function buildChapters(d) {
+  const chapters = d.chapterWordCounts || {};
+  const target = d.chapterTargetWords || 2500;
+  return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter III</div>
+        <h2><em>Chapters</em> taking <strong>shape</strong></h2>
+        <div class="sub">Each measured against the ${target}-word ideal</div>
+        ${Object.keys(chapters).length ? `
+        <div class="reveal reveal-d1">
+          <div class="chapter-list">
+            ${Object.entries(chapters).sort((a,b) => b[1] - a[1]).slice(0, 25).map(([path, wc]) => {
+              const name = path.split('/').pop().replace('.md','');
+              const cpct = Math.min(Math.round(wc / target * 100), 100);
+              return `
+              <div class="chapter-item">
+                <span class="title">${name}</span>
+                <div class="bar"><span style="width:${cpct}%"></span></div>
+                <span class="num">${fmt(wc)} w &middot; ${pp(wc)} pp</span>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>
+        ` : '<div class="sub">No chapter data yet</div>'}
+        <p class="note">${Object.keys(chapters).length} chapters tracked. Target is ${target} words each. ${Object.values(chapters).filter(w => w >= target).length} hit the mark.</p>
+      </div>
+    </section>`;
+}
+
+function buildSchedule() {
+  return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter XI</div>
+        <h2>The <em>ritual</em> of <strong>writing</strong></h2>
+        <div class="sub">When the words find their way onto the page</div>
+        <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="hoursChart"></canvas></div></div>
+        <p class="note">I commit most often at ${peakHour(progress.commitHours)}:00. That is my window. ${totalCommitDays(progress.commitHours)} commits across ${Object.keys(progress.commitHours).length} distinct hours.</p>
+      </div>
+    </section>`;
+}
+
+function render() {
+  if (!progress || !progress.days.length) {
+    document.getElementById('app').innerHTML = '<div style="text-align:center;padding:80px 0;color:var(--ink-faint);font-style:italic;">No data yet. Run <code>pnpm extract</code>.</div>';
+    return;
+  }
+
+  const d = progress;
+  const days = d.days;
+  const totalWords = days[days.length - 1].totalWords;
+  const est = d.estimatedFinish || {};
+  const stats = getLatestStats();
+  const t = d.thresholds || {};
+
+  document.getElementById('app').innerHTML =
+    buildHero(d, days, totalWords, est) +
+    buildProgress(d, totalWords) +
+    buildSections(d, totalWords) +
+    buildChapters(d) +
+    buildStyle(d, stats, t) +
+    buildSchedule();
+
+  renderProgressChart(days, totalWords, d);
+  renderHoursChart();
+  setupReveal();
+}
+
+function renderProgressChart(days, totalWords, d) {
+  const ctx = document.getElementById('progressChart');
+  if (!ctx) return;
+  const labels = days.map(d => d.date);
+  const paceBase = d.dailyGoal;
+  const est = d.estimatedFinish || {};
+  const dailyAvg = totalWords / days.length;
+  const extLabels = [...labels];
+  const extActual = days.map(d => d.totalWords);
+  const extGoal = days.map((_, i) => paceBase * (i + 1));
+  const extPace = days.map((_, i) => paceBase * (i + 1));
+  const lastDate = new Date(days[days.length - 1].date);
+  const onTrackDate = est.onTrack ? new Date(est.onTrack) : null;
+  const pacedDate = est.paced ? new Date(est.paced) : null;
+  const endDate = (onTrackDate && pacedDate) ? new Date(Math.max(onTrackDate, pacedDate)) : (onTrackDate || pacedDate || new Date(Date.now() + 30*86400000));
+  const cursor = new Date(lastDate); cursor.setDate(cursor.getDate() + 1);
+  let pGoal = totalWords, pPace = totalWords;
+  while (cursor <= endDate) {
+    extLabels.push(cursor.toISOString().slice(0, 10));
+    extActual.push(null);
+    pGoal = Math.min(pGoal + paceBase, d.totalGoal);
+    pPace = Math.min(pPace + dailyAvg, d.totalGoal);
+    extGoal.push(pGoal); extPace.push(pPace);
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  Chart.getChart('progressChart')?.destroy();
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: extLabels,
+      datasets: [
+        { data: extActual, borderColor: '#22211f', borderWidth: 1.5, pointRadius: 1, pointBackgroundColor: '#22211f', tension: 0.2, spanGaps: false },
+        { data: extLabels.map(() => d.totalGoal), borderColor: '#d8d3c7', borderWidth: 1, borderDash: [4, 8], pointRadius: 0 },
+        { data: extGoal, borderColor: '#c0d6b8', borderWidth: 1, borderDash: [2, 6], pointRadius: 0 },
+        { data: extPace, borderColor: '#d4c8a8', borderWidth: 1, borderDash: [1, 8], pointRadius: 0 }
+      ]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 1200, easing: 'easeInOutQuart' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#b8b5ad', maxTicksLimit: 8, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: '#e8e3d7' } },
+        y: { ticks: { color: '#b8b5ad', font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: '#e8e3d7' } }
+      }
+    }
+  });
+}
+
+function renderHoursChart() {
+  const ctx = document.getElementById('hoursChart');
+  if (!ctx) return;
+  const hours = progress.commitHours || {};
+  const labels = Array.from({ length: 24 }, (_, i) => i);
+  Chart.getChart('hoursChart')?.destroy();
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels.map(h => `${h}`),
+      datasets: [{
+        data: labels.map(h => hours[h] || 0),
+        backgroundColor: labels.map(h => (hours[h] || 0) > 0 ? '#8b6914' : '#e8e3d7'),
+        borderWidth: 0, borderRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 800, easing: 'easeInOutQuart' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: '#b8b5ad', font: { family: 'IBM Plex Mono', size: 9 } }, grid: { display: false } },
+        y: { ticks: { color: '#b8b5ad', font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: '#e8e3d7' } }
+      }
+    }
+  });
+}
+
+function setupReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.25, rootMargin: '0px 0px -40px 0px' });
+
+  document.querySelectorAll('.fade').forEach(el => observer.observe(el));
+
+  const thumb = document.getElementById('scroll-thumb');
+  if (thumb) {
+    window.addEventListener('scroll', () => {
+      const h = document.documentElement;
+      const pct = h.scrollTop / (h.scrollHeight - h.clientHeight) * 100;
+      thumb.style.height = Math.min(pct, 100) + '%';
+    }, { passive: true });
+  }
+}
+
+refresh();
+</script>
+</body>
+</html>
