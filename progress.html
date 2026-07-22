@@ -496,7 +496,23 @@ function buildProgress(d, totalWords, sectionGoal, dailyAvg, est) {
         <h2>The <strong>${pct}%</strong> <em>mark</em></h2>
         <div class="sub">${fmt(totalWords)} of ${fmt(sectionGoal)} toward the final page</div>
         <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="progressChart"></canvas></div></div>
-        <p class="note">${fmt(totalWords)} words written of ${fmt(sectionGoal)}. I am ${pct}% through. ${fmt(sectionGoal - totalWords)} words remain.<br><br>I average <em>${fmt(dailyAvg)}</em> words per day. At this pace I finish by <em>${est.paced || '--'}</em>. On daily goal, by <em>${est.onTrack || '--'}</em>.</p>
+        <p class="note">${fmt(totalWords)} words written of ${fmt(sectionGoal)}. I am ${pct}% through. ${fmt(sectionGoal - totalWords)} words remain.<br><br>At this pace I finish by <em>${est.paced || '--'}</em>. On daily goal, by <em>${est.onTrack || '--'}</em>.</p>
+      </div>
+    </section>`;
+}
+
+function buildSessions(dailyAvg) {
+  const days = progress.days;
+  const recent = days.slice(-10);
+  if (!recent.length) return '';
+  return `
+    <section>
+      <div class="container fade">
+        <div class="chapter-num">Chapter II</div>
+        <h2><em>Recent</em> <strong>sessions</strong></h2>
+        <div class="sub">Last ${recent.length} writing days</div>
+        <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="sessionsChart"></canvas></div></div>
+        <p class="note">I average <em>${fmt(dailyAvg)}</em> words per day across ${days.length} sessions.</p>
       </div>
     </section>`;
 }
@@ -506,7 +522,7 @@ function buildSections(d, totalWords) {
   return `
     <section>
       <div class="container fade">
-        <div class="chapter-num">Chapter II</div>
+        <div class="chapter-num">Chapter III</div>
         <h2><em>Where</em> the words <strong>live</strong></h2>
         <div class="sub">${Object.keys(sections).length} sections across my manuscript</div>
         <div class="reveal reveal-d1">
@@ -572,7 +588,7 @@ function buildStyle(d, stats, t, dailyAvg) {
     });
   }
 
-  const metricChapters = ['IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
+  const metricChapters = ['V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
   return metrics.map((m, i) => {
     const pct = Math.min((m.value - m.domain[0]) / (m.domain[1] - m.domain[0]) * 100, 100);
@@ -617,7 +633,7 @@ function buildChapters(d) {
   return `
     <section>
       <div class="container fade">
-        <div class="chapter-num">Chapter XII</div>
+        <div class="chapter-num">Chapter XIII</div>
         <h2><em>Chapters</em> taking <strong>shape</strong></h2>
         <div class="sub">Each measured against the ${target}-word ideal</div>
         ${Object.keys(chapters).length ? `
@@ -662,7 +678,7 @@ function buildSchedule() {
   return `
     <section>
       <div class="container fade">
-        <div class="chapter-num">Chapter XIII</div>
+        <div class="chapter-num">Chapter XIV</div>
         <h2><em>When</em> I <strong>write</strong></h2>
         <div class="sub">My peak hour is ${peakH}:00</div>
         <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="hoursChart"></canvas></div></div>
@@ -672,7 +688,7 @@ function buildSchedule() {
 
     <section>
       <div class="container fade">
-        <div class="chapter-num">Chapter XIV</div>
+        <div class="chapter-num">Chapter XV</div>
         <h2><em>Which</em> days I <strong>show up</strong></h2>
         <div class="sub">${bestDay} is my best writing day</div>
         <div class="reveal reveal-d1">
@@ -716,12 +732,14 @@ function render() {
   document.getElementById('app').innerHTML =
     buildHero(d, days, totalWords, est, sectionGoal, dailyAvg) +
     buildProgress(d, totalWords, sectionGoal, dailyAvg, est) +
+    buildSessions(dailyAvg) +
     buildSections(d, totalWords) +
     buildChapters(d) +
     buildStyle(d, stats, t, dailyAvg) +
     buildSchedule();
 
   renderProgressChart(days, totalWords, { ...d, totalGoal: sectionGoal });
+  renderSessionsChart();
   renderHoursChart();
   setupReveal();
 }
@@ -776,6 +794,37 @@ function renderProgressChart(days, totalWords, d) {
       plugins: { legend: { display: false } },
       scales: {
         x: { ticks: { color: faint, maxTicksLimit: 8, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } },
+        y: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } }
+      }
+    }
+  });
+}
+
+function renderSessionsChart() {
+  const ctx = document.getElementById('sessionsChart');
+  if (!ctx) return;
+  const dark = document.body.classList.contains('dark');
+  const ink = dark ? '#c9a96e' : '#8b6914';
+  const grid = dark ? '#2d261e' : '#e8e3d7';
+  const faint = dark ? '#c9a96e' : '#8b6914';
+  const recent = progress.days.slice(-10);
+  Chart.getChart('sessionsChart')?.destroy();
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: recent.map(d => d.date.slice(5)),
+      datasets: [{
+        data: recent.map(d => d.wordsNet),
+        backgroundColor: recent.map(d => d.wordsNet > 0 ? ink : grid),
+        borderWidth: 0, borderRadius: 0
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 800, easing: 'easeInOutQuart' },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { display: false } },
         y: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } }
       }
     }

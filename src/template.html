@@ -3,1269 +3,502 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='3' fill='%23161b22'/><text x='8' y='12' text-anchor='middle' font-size='11' fill='%2358a6ff'>W</text></svg>">
+<meta property="og:title" content="Writing Tracker">
+<meta property="og:description" content="A book, in numbers.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' rx='2' fill='%23faf7f0'/><text x='8' y='12' text-anchor='middle' font-size='10' fill='%2322211f'>W</text></svg>">
 <title>Writing Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
   :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --border: #30363d;
-    --text: #e6edf3;
-    --text-muted: #8b949e;
-    --accent: #58a6ff;
-    --green: #3fb950;
-    --red: #f85149;
-    --orange: #d2991d;
-    --radius: 8px;
+    --paper: #faf7f0;
+    --paper-warm: #f5f0e6;
+    --ink: #22211f;
+    --ink-light: #5c5a55;
+    --ink-faint: #b8b5ad;
+    --accent: #8b6914;
+    --green: #4a6741;
+    --red: #9b4e43;
+    --orange: #a0683a;
+    --line: #e8e3d7;
+    --surface: #f5f0e6;
+  }
+  body.dark {
+    --paper: #191410;
+    --ink: #d4c5a9;
+    --ink-light: #8a7e6b;
+    --ink-faint: #5a5040;
+    --accent: #c9a96e;
+    --green: #7a9a6e;
+    --red: #b0685c;
+    --orange: #c4956a;
+    --line: #2d261e;
+    --surface: #211c16;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg);
-    color: var(--text);
+    font-family: 'Crimson Text', 'Georgia', 'Times New Roman', serif;
+    background: var(--paper);
+    color: var(--ink);
     line-height: 1.5;
-    padding: 24px;
-    max-width: 1200px;
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+    max-width: 1100px;
     margin: 0 auto;
+    padding: 28px 20px;
   }
-  h1 { font-size: 1.5rem; font-weight: 600; letter-spacing: -0.02em; }
-  h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 8px; }
-  .top-bar {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 24px; flex-wrap: wrap; gap: 12px;
-  }
+  h1 { font-size: 1.6rem; font-weight: 400; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); }
+  h2 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 6px; font-family: 'IBM Plex Mono', monospace; }
+  em { font-style: italic; color: var(--accent); }
+
+  .top-bar { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 8px; }
   .btn {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text);
-    padding: 6px 14px; border-radius: var(--radius); cursor: pointer; font-size: 0.85rem;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem;
+    background: var(--surface); border: 1px solid var(--line); color: var(--ink-light);
+    padding: 5px 12px; cursor: pointer; letter-spacing: 0.04em;
   }
   .btn:hover { border-color: var(--accent); color: var(--accent); }
-  .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 12px; margin-bottom: 24px;
+  .tabs { display: flex; gap: 1px; margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+  .tab {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; letter-spacing: 0.06em;
+    background: none; border: none; color: var(--ink-faint); padding: 6px 14px; cursor: pointer;
+    border-bottom: 1px solid transparent; margin-bottom: -1px;
   }
-  .stat-card {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px;
-  }
-  .stat-value { font-size: 1.75rem; font-weight: 700; letter-spacing: -0.03em; }
-  .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-top: 2px; }
-  .stat-card.green .stat-value { color: var(--green); }
-  .stat-card.orange .stat-value { color: var(--orange); }
-  .stat-card.red .stat-value { color: var(--red); }
-  .charts {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 16px; margin-bottom: 24px;
-  }
-  @media (max-width: 768px) { .charts { grid-template-columns: 1fr; } }
-  .chart-box {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 16px;
-  }
-  .chart-box canvas { width: 100% !important; max-height: 300px; }
-  .section-bar {
-    display: flex; gap: 4px; margin-bottom: 24px; height: 8px; border-radius: 4px; overflow: hidden;
-  }
-  .section-bar span { height: 100%; border-radius: 0; }
-  .detail-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  .detail-table th { text-align: left; color: var(--text-muted); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
-  .detail-table td { padding: 6px 12px; border-bottom: 1px solid var(--border); }
-  .detail-table tr:hover td { background: rgba(255,255,255,0.03); }
-  .detail-table .num { text-align: right; font-variant-numeric: tabular-nums; }
-  .drilldown { margin-bottom: 24px; }
-  .section-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 12px; }
-  .section-tab {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text-muted);
-    padding: 4px 12px; border-radius: var(--radius); cursor: pointer; font-size: 0.8rem;
-  }
-  .section-tab.active { border-color: var(--accent); color: var(--accent); }
-  .settings-panel {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 20px; margin-bottom: 24px; display: none;
-  }
-  .settings-panel.open { display: block; }
-  .setting-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-  .setting-row label { width: 160px; font-size: 0.85rem; color: var(--text-muted); }
-  .setting-row input {
-    background: var(--bg); border: 1px solid var(--border); color: var(--text);
-    padding: 6px 10px; border-radius: var(--radius); font-size: 0.9rem; width: 160px;
-  }
-  .has-tip { cursor: help; position: relative; }
-  .has-tip .tip {
-    display: none; position: fixed; background: #1c2128; border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 10px 14px; width: 280px; max-width: calc(100vw - 16px); z-index: 100;
-    font-size: 0.75rem; line-height: 1.5; color: var(--text); pointer-events: none;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-    white-space: normal; word-wrap: break-word; overflow-wrap: break-word; font-weight: 400;
-  }
-  .has-tip:hover .tip { display: block; }
-  .tip b { color: var(--accent); }
-  .tip .bench { color: var(--text-muted); font-size: 0.7rem; margin-top: 4px; border-top: 1px solid var(--border); padding-top: 4px; line-height: 1.6; }
-  .setting-row input:focus { outline: none; border-color: var(--accent); }
-  .setting-val { color: var(--text); font-size: 0.85rem; }
-  .c-green { color: var(--green); }
-  .c-orange { color: var(--orange); }
-  .c-red { color: var(--red); }
-  .toast {
-    position: fixed; bottom: 24px; right: 24px;
-    background: var(--surface); border: 1px solid var(--border);
-    padding: 10px 18px; border-radius: var(--radius); font-size: 0.85rem;
-    opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 10;
-  }
-  .toast.show { opacity: 1; }
-  .loading { text-align: center; padding: 60px 0; color: var(--text-muted); }
-  .error-state { text-align: center; padding: 60px 0; }
-  .error-state p { color: var(--red); margin-bottom: 12px; }
-
-  /* Hero */
-  .hero { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
-  .hero-main { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
-  .hero-count { font-size: 2.5rem; font-weight: 800; letter-spacing: -0.04em; }
-  .hero-label { font-size: 0.9rem; color: var(--text-muted); }
-  .hero-bar-wrap { margin-bottom: 14px; }
-  .hero-bar { height: 8px; background: #21262d; border-radius: 4px; overflow: hidden; }
-  .hero-bar-fill { height: 100%; background: linear-gradient(90deg, #3fb950, #58a6ff); border-radius: 4px; transition: width 0.5s; }
-  .hero-bar-pct { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
-
-  /* Tabs */
-  .tabs { display: flex; gap: 2px; margin: 16px 0; border-bottom: 2px solid var(--border); }
-  .tab { background: none; border: none; color: var(--text-muted); padding: 8px 20px; cursor: pointer; font-size: 0.85rem; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
-  .tab:hover { color: var(--text); }
   .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-  /* Metric strip */
-  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 1px; vertical-align: middle; background: var(--text-muted); }
-  .dot-g { background: var(--green); }
-  .dot-o { background: var(--orange); }
-  .dot-r { background: var(--red); }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .card {
+    background: var(--surface); border: 1px solid var(--line); padding: 14px;
+  }
+  .card .val {
+    font-family: 'IBM Plex Mono', monospace; font-size: 1.4rem; font-weight: 500;
+  }
+  .card .lbl { font-size: 0.65rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
+  .card .sub { font-size: 0.7rem; color: var(--accent); margin-top: 1px; }
 
-  /* Mobile */
-  @media (max-width: 768px) {
-    body { padding: 12px; }
-    h1 { font-size: 1.25rem; }
-    .top-bar { gap: 8px; }
-    .hero { padding: 16px; }
-    .hero-count { font-size: 1.8rem; }
-    .tab { padding: 6px 14px; font-size: 0.78rem; }
-    .stats { grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 6px; }
-    .stat-card { padding: 12px; }
-    .stat-value { font-size: 1.35rem; }
-    .stat-label { font-size: 0.7rem; }
-    .charts { grid-template-columns: 1fr; gap: 12px; }
-    .chart-box { padding: 12px; }
-    .chart-box canvas { max-height: 220px; }
-    .has-tip .tip { width: 240px; font-size: 0.7rem; padding: 8px 10px; }
-    .section-tabs { gap: 2px; }
-    .section-tab { padding: 3px 8px; font-size: 0.7rem; }
-    .detail-table { font-size: 0.7rem; }
-    .detail-table th, .detail-table td { padding: 4px 6px; }
-    .setting-row { flex-wrap: wrap; gap: 6px; }
-    .setting-row label { width: 100%; }
-    .settings-panel { padding: 14px; }
-    .drilldown { overflow-x: auto; }
-    .chapter-bar { flex-wrap: wrap; }
+  .section-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 12px;
+  }
+  .section-cell { background: var(--paper); padding: 12px; }
+  .section-cell .val { font-family: 'IBM Plex Mono', monospace; font-size: 1.1rem; font-weight: 500; }
+  .section-cell .pages { font-size: 0.7rem; color: var(--accent); }
+  .section-cell .lbl { font-size: 0.6rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+
+  .metric-line { position: relative; height: 36px; margin: 12px 0 20px; }
+  .metric-line .track { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  .metric-line .fill { position: absolute; left: 0; top: 50%; height: 1px; background: var(--ink); }
+  .metric-line .marker { position: absolute; top: 50%; margin-left: -4px; margin-top: -5px; width: 8px; height: 10px; background: var(--ink); }
+  .metric-line .mark-label { position: absolute; top: 50%; margin-top: -18px; font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink); transform: translateX(-50%); }
+  .metric-line .ref { position: absolute; top: 50%; margin-top: -6px; width: 1px; height: 12px; background: var(--ink-faint); }
+  .metric-line .ref-label { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 0.5rem; color: var(--accent); white-space: nowrap; }
+
+  .chapter-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+  .chapter-item { background: var(--paper); padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; }
+  .chapter-item .title { flex: 1; font-style: italic; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chapter-item .bar { width: 80px; height: 2px; background: var(--line); position: relative; }
+  .chapter-item .bar span { position: absolute; left: 0; top: 0; height: 100%; background: var(--accent); }
+  .chapter-item .num { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink-faint); min-width: 70px; text-align: right; }
+
+  .chart-wrap canvas { max-height: 180px; }
+  .full { grid-column: 1 / -1; }
+
+  .meta-row {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
+    color: var(--ink-faint); letter-spacing: 0.04em; margin-top: 8px;
+  }
+  .theme-toggle {
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem;
+    background: none; border: 1px solid var(--line); color: var(--ink-faint);
+    padding: 4px 10px; cursor: pointer; letter-spacing: 0.04em;
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+  @media (max-width: 700px) {
+    .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    body { padding: 12px 8px; font-size: 15px; }
+    h1 { font-size: 1.3rem; }
+    .card { padding: 10px; }
+    .card .val { font-size: 1.2rem; }
+    .section-grid { grid-template-columns: repeat(2, 1fr); }
+    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab { padding: 5px 10px; font-size: 0.6rem; white-space: nowrap; }
+    .metric-line { height: 44px; margin: 14px 0 24px; }
+    .chapter-item { gap: 6px; font-size: 0.7rem; }
+    .chapter-item .bar { width: 50px; }
+    .chapter-item .num { min-width: 55px; font-size: 0.55rem; }
+    .meta-row { font-size: 0.55rem; gap: 8px; }
+    .top-bar { gap: 4px; }
   }
 </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <h1>Writing Tracker</h1>
-  <div style="display:flex;gap:8px;">
-    <button class="btn" onclick="toggleSettings()">Config</button>
+  <h1 id="page-title">Writing <em>Tracker</em></h1>
+  <div style="display:flex;gap:8px;align-items:center;">
+    <span class="meta-row" style="margin:0;" id="meta-info"></span>
+    <button class="btn" onclick="toggleConfig()">config</button>
+    <button class="theme-toggle" onclick="toggleTheme()">dark</button>
   </div>
 </div>
 
-<div id="app"><div class="loading">Loading…</div></div>
+<div id="config-panel" class="card" style="display:none;margin-bottom:12px;"></div>
 
-<div class="toast" id="toast"></div>
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('overview')">Overview</button>
+  <button class="tab" onclick="switchTab('style')">Style</button>
+  <button class="tab" onclick="switchTab('chapters')">Chapters</button>
+  <button class="tab" onclick="switchTab('habits')">Habits</button>
+</div>
+
+<div id="app"><div style="color:var(--ink-faint);font-style:italic;padding:40px 0;">Loading...</div></div>
+
+<div style="text-align:center;margin-top:40px;padding-top:16px;border-top:1px solid var(--line);">
+  <button class="btn" onclick="share()" style="margin-right:12px;">share this page</button>
+  <span style="color:var(--ink-faint);font-size:0.7rem;font-style:italic;">Want to know when it is finished? <a href="mailto:hampus.adamsson@gmail.com" style="color:var(--accent);">Send me an email</a></span>
+</div>
 
 <script>
-// ── State ──
-let progress = null;
-let activeSection = 'all';
-let activeTab = 'progress';
-let selectedFile = null;
-
-// ── Colors for sections ──
-const COLORS = ['#58a6ff','#3fb950','#d2991d','#f85149','#bc8cff','#ff7b72','#a5d6ff','#56d364'];
-const sectionColors = {};
-
 // __PROGRESS_JSON__
 
-// ── Init ──
+let progress = null;
+let activeTab = 'overview';
+let activeSection = 'all';
+
 function refresh() {
-  document.getElementById('app').innerHTML = '<div class="loading">Loading…</div>';
   try {
-    if (typeof __PROGRESS_JSON__ === 'undefined') {
-      throw new Error('No data embedded. Run: pnpm extract');
-    }
+    if (typeof __PROGRESS_JSON__ === 'undefined') throw new Error('No data. Run: pnpm extract');
     progress = __PROGRESS_JSON__;
-    render();
+    renderTabs();
+    switchTab('overview');
   } catch (err) {
-    document.getElementById('app').innerHTML =
-      `<div class="error-state"><p>${err.message}</p></div>`;
+    document.getElementById('app').innerHTML = `<div style="color:var(--red);font-style:italic;padding:40px 0;">${err.message}</div>`;
   }
 }
 
-function render() {
-  if (!progress || !progress.days.length) {
-    document.getElementById('app').innerHTML = '<div class="loading">No data yet. Run <code>pnpm extract</code>.</div>';
-    return;
-  }
-  assignSectionColors();
-  if (selectedFile) {
-    document.getElementById('app').innerHTML = buildFileDetail();
-    renderFileDetailCharts();
-  } else {
-    document.getElementById('app').innerHTML = buildHTML();
-    renderCharts();
-  }
-}
-
-function assignSectionColors() {
-  const sections = Object.keys(progress.perSection || {});
-  sections.forEach((s, i) => sectionColors[s] = COLORS[i % COLORS.length]);
-  sectionColors['All'] = COLORS[0];
-}
-
-// ── HTML ──
-function buildHTML() {
-  const d = progress;
-  const days = getFilteredDays();
-  const isAll = activeSection === 'all';
-  // When showing all, use manuscript chapter word counts for accurate current state
-  const chapterWords = isAll ? Object.values(d.chapterWordCounts || {}).reduce((a, b) => a + b, 0) : 0;
-  const totalWords = isAll ? (chapterWords || (days.length > 0 ? days[days.length - 1].totalWords : 0)) : (days.length > 0 ? days[days.length - 1].totalWords : 0);
-  const goalTarget = isAll ? d.totalGoal : Math.round(d.totalGoal * (totalWords / (d.totalWords || 1)));
-  const estFinish = d.estimatedFinish || {};
-  const pct = goalTarget > 0 ? Math.round(totalWords / goalTarget * 100) : 0;
-  const dailyAvg = days.length > 0 ? Math.round(totalWords / Math.max((new Date(days[days.length-1].date) - new Date(days[0].date)) / 86400000 + 1, 1)) : 0;
-
-  return `
-  <!-- Hero -->
-  <div class="hero">
-    <div class="hero-main">
-      <div>
-        <div class="hero-count">${fmt(totalWords)}</div>
-        <div style="color:var(--accent);font-size:0.9rem;font-weight:500;">~${Math.round(totalWords / (progress.wordsPerPage || 300))} pages</div>
-        <div class="hero-label">words written${isAll ? '' : ' · ' + activeSection}</div>
-      </div>
-    </div>
-    <div class="hero-bar-wrap">
-      <div class="hero-bar"><div class="hero-bar-fill" style="width:${Math.min(pct, 100)}%"></div></div>
-      <div class="hero-bar-pct">${pct}% of ${fmt(goalTarget)}</div>
-    </div>
-  </div>
-
-  <!-- Stats bar -->
-  <div style="display:flex;gap:16px;flex-wrap:wrap;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;font-size:0.85rem;align-items:center;justify-content:space-around;">
-    <div style="text-align:center;"><div style="color:var(--accent);font-weight:600;font-size:1.1rem;">${estFinish.paced || '—'}</div><div style="color:var(--text-muted);font-size:0.7rem;">at pace</div></div>
-    <div style="text-align:center;"><div style="color:var(--green);font-weight:600;font-size:1.1rem;">${estFinish.onTrack || '—'}</div><div style="color:var(--text-muted);font-size:0.7rem;">on track</div></div>
-    <div style="text-align:center;"><div style="color:var(--orange);font-weight:600;font-size:1.1rem;">${fmt(dailyAvg)}</div><div style="color:var(--text-muted);font-size:0.7rem;">avg/day</div></div>
-    <div style="text-align:center;"><div style="color:var(--text);font-weight:600;font-size:1.1rem;">${days.length}</div><div style="color:var(--text-muted);font-size:0.7rem;">days writing</div></div>
-  </div>
-
-  <!-- Section cards -->
-  <div class="stats" style="margin-bottom:12px;">
-    ${Object.entries(d.perSection).map(([name, info]) => {
-      const spct = Math.round(info.words / d.totalWords * 100);
-      const filesInSection = info.files || 0;
-      return `
-    <div class="stat-card" style="cursor:pointer;border-left:3px solid ${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.45};transition:opacity 0.2s;" onclick="switchSection('${name}')">
-      <div class="stat-value" style="font-size:1.35rem;">${fmt(info.words)}</div>
-      <div style="color:${sectionColors[name]};font-size:0.85rem;font-weight:500;margin-bottom:2px;">~${Math.round(info.words / (progress.wordsPerPage || 300))} pages</div>
-      <div class="stat-label">${name} <span style="color:var(--text-muted)">${spct}% · ${filesInSection} files</span></div>
-    </div>`;
-    }).join('')}
-  </div>
-
-  <!-- Section bar -->
-  <div class="section-bar" style="margin-bottom:8px;">
-    ${Object.entries(d.perSection).map(([name, data]) =>
-      `<span style="width:${data.words/d.totalWords*100}%;background:${sectionColors[name]};opacity:${activeSection === 'all' || activeSection === name ? 1 : 0.4}" title="${name}: ${fmt(data.words)}"></span>`
-    ).join('')}
-  </div>
-
-  <!-- Compact metric strip -->
-  ${buildMetricStrip()}
-
-  <!-- Chart tabs -->
-  <div class="tabs">
-    <button class="tab ${activeTab === 'progress' ? 'active' : ''}" onclick="switchTab('progress')">Progress</button>
-    <button class="tab ${activeTab === 'style' ? 'active' : ''}" onclick="switchTab('style')">Style</button>
-  </div>
-
-  <div class="tab-content" id="tab-progress" style="${activeTab === 'progress' ? '' : 'display:none'}">
-    <div class="chart-box" style="margin-bottom:16px;"><h2>Progress ${chartTip('cumulative')}</h2><canvas id="cumulativeChart"></canvas></div>
-    <div class="charts">
-      <div class="chart-box"><h2>Daily Words ${chartTip('daily')}</h2><canvas id="dailyChart"></canvas></div>
-      <div class="chart-box"><h2>Writing Schedule ${chartTip('hours')}</h2><canvas id="hoursChart"></canvas></div>
-    </div>
-  </div>
-
-  <div class="tab-content" id="tab-style" style="${activeTab === 'style' ? '' : 'display:none'}">
-    <div class="charts">
-      <div class="chart-box"><h2>Writing Style ${chartTip('style')}</h2><canvas id="styleChart"></canvas></div>
-      <div class="chart-box"><h2>Vocabulary Richness ${chartTip('vocab')}</h2><canvas id="vocabChart"></canvas></div>
-    </div>
-    <div class="charts">
-      <div class="chart-box"><h2>Sentiment Trend ${chartTip('sentiment')}</h2><canvas id="sentimentChart"></canvas></div>
-    </div>
-  </div>
-
-  <!-- Chapter table -->
-  ${buildChapterTable()}
-
-  <!-- Drilldown -->
-  <div class="drilldown">
-    <h2>Files <span style="font-weight:400;font-size:0.75rem;color:var(--text-muted);">— click for per-file metrics</span></h2>
-    <div class="section-tabs">
-      <button class="section-tab ${activeSection === 'all' ? 'active' : ''}" onclick="switchSection('all')">All</button>
-      ${Object.keys(d.perSection).map(s =>
-        `<button class="section-tab ${activeSection === s ? 'active' : ''}" onclick="switchSection('${s}')">${s} (${fmt(d.perSection[s].words)})</button>`
-      ).join('')}
-    </div>
-    ${buildFileTable()}
-  </div>
-  `;
-}
-
-function paginate(entries, rowFn, id, cols) {
-  const limit = 25;
-  const rows = entries.map(rowFn).join('');
-  if (entries.length <= limit) return `<tbody>${rows}</tbody>`;
-  const visible = entries.slice(0, limit).map(rowFn).join('');
-  const hidden = entries.slice(limit).map(rowFn).join('');
-  return `<tbody>${visible}</tbody>
-    <tbody id="${id}-more" style="display:none;">${hidden}</tbody>
-    <tbody id="${id}-btn"><tr><td colspan="${cols}" style="text-align:center;"><button class="btn" onclick="document.getElementById('${id}-more').style.display='';document.getElementById('${id}-btn').style.display='none';">Show all (${entries.length})</button></td></tr></tbody>`;
-}
-
-function buildFileTable() {
-  // Collect all files across all days, deduped
-  const fileMap = new Map();
-  for (const day of progress.days) {
-    for (const f of day.files) {
-      if (activeSection !== 'all' && f.section !== activeSection) continue;
-      if (!fileMap.has(f.path)) {
-        fileMap.set(f.path, { path: f.path, section: f.section, added: 0, removed: 0, deleted: false });
-      }
-      const entry = fileMap.get(f.path);
-      entry.added += f.wordsAdded;
-      entry.removed += f.wordsRemoved;
-      if (f.deleted) entry.deleted = true;
-    }
-  }
-  const files = [...fileMap.values()].sort((a,b) => (b.added - b.removed) - (a.added - a.removed));
-  if (!files.length) return '<p style="color:var(--text-muted);font-size:0.85rem;">No files in this section</p>';
-  return `
-    <div style="overflow-x:auto;">
-    <table class="detail-table">
-      <thead><tr><th>File</th><th>Section</th><th class="num">Added</th><th class="num">Removed</th><th class="num">Net</th></tr></thead>
-      ${paginate(files, f => `
-          <tr style="cursor:pointer;${f.deleted ? 'opacity:0.4' : ''}" onclick="switchFile('${f.path.replace(/'/g, "\\'")}')">
-            <td style="max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${f.deleted ? 'text-decoration:line-through' : ''}" title="${f.path}${f.deleted ? ' (deleted)' : ''}">${f.path}</td>
-            <td>${f.section}${f.deleted ? ' (deleted)' : ''}</td>
-            <td class="num" style="color:var(--green)">+${fmt(f.added)}</td>
-            <td class="num" style="color:var(--red)">−${fmt(f.removed)}</td>
-            <td class="num">${f.deleted ? '<span style="color:var(--text-muted)">deleted</span>' : fmt(f.added - f.removed)}</td>
-          </tr>
-        `, 'filelist', 5)}
-    </table>
-    </div>`;
-}
-
-function switchSection(section) {
-  selectedFile = null;
-  activeSection = activeSection === section ? 'all' : section;
-  render();
-}
+const fmt = n => n.toLocaleString();
+const pp = w => Math.round(w / (progress.wordsPerPage || 300));
 
 function switchTab(tab) {
   activeTab = tab;
-  // Re-render only tab content and charts to avoid full DOM rebuild
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().startsWith(tab)));
-  document.querySelectorAll('.tab-content').forEach(el => { el.style.display = el.id === 'tab-' + tab ? '' : 'none'; });
-  renderCharts();
+  document.getElementById('config-panel').style.display = 'none';
+  renderTabs();
 }
 
-function switchFile(path) {
-  selectedFile = path;
-  render();
-}
-
-// ── File detail view ──
-function getFileDays(path) {
-  const dayMap = new Map();
-  for (const day of progress.days) {
-    for (const f of day.files) {
-      if (f.path !== path) continue;
-      if (!dayMap.has(day.date)) {
-        dayMap.set(day.date, { date: day.date, wordsAdded: 0, wordsRemoved: 0, totalWords: 0, textStats: null });
-      }
-      const d = dayMap.get(day.date);
-      d.wordsAdded += f.wordsAdded;
-      d.wordsRemoved += f.wordsRemoved;
-      if (f.textStats) d.textStats = f.textStats;
-    }
+function toggleConfig() {
+  const panel = document.getElementById('config-panel');
+  if (panel.style.display === 'none') {
+    const d = progress;
+    const t = d.thresholds || {};
+    panel.innerHTML = `
+      <h2>Config</h2>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:0.8rem;margin-top:8px;">
+        <div><span style="color:var(--ink-faint);">Daily goal</span> <strong>${d.dailyGoal}</strong></div>
+        <div><span style="color:var(--ink-faint);">Total goal</span> <strong>${fmt(d.totalGoal)}</strong></div>
+        <div><span style="color:var(--ink-faint);">Chapter target</span> <strong>${d.chapterTargetWords||2500}</strong></div>
+        <div><span style="color:var(--ink-faint);">Words per page</span> <strong>${d.wordsPerPage||300}</strong></div>
+        <div><span style="color:var(--ink-faint);">Tracked section</span> <strong>${d.textAnalysisSection||'Manuscript'}</strong></div>
+        <div><span style="color:var(--ink-faint);">Edit ratio</span> <strong>${d.editRatio}%</strong></div>
+      </div>
+      <div style="margin-top:8px;font-size:0.65rem;color:var(--ink-faint);">Edit <code>bookprogress.config.json</code> and run <code>pnpm extract</code> to change.</div>
+    `;
+    panel.style.display = 'block';
+  } else {
+    panel.style.display = 'none';
   }
-  const days = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date));
-  let running = 0;
-  for (const d of days) {
-    running += d.wordsAdded - d.wordsRemoved;
-    d.totalWords = running;
-  }
-  return days;
 }
 
-function getLatestFileStats(path) {
-  for (let i = progress.days.length - 1; i >= 0; i--) {
-    for (const f of progress.days[i].files) {
-      if (f.path === path && f.textStats) return f.textStats;
-    }
+function renderTabs() {
+  if (!progress || !progress.days.length) {
+    document.getElementById('app').innerHTML = '<div style="color:var(--ink-faint);font-style:italic;padding:40px 0;">No data yet.</div>';
+    return;
   }
-  return null;
+  const d = progress;
+  const days = d.days;
+  const totalWords = days[days.length-1].totalWords;
+  const chapterWords = Object.values(d.chapterWordCounts || {}).reduce((a,b)=>a+b,0);
+  const wpp = d.wordsPerPage || 300;
+  const est = d.estimatedFinish || {};
+  const firstDate = new Date(days[0].date);
+  const lastDate = new Date(days[days.length-1].date);
+  const calendarDays = Math.round((lastDate - firstDate)/86400000)+1;
+  const dailyAvg = Math.round(chapterWords / calendarDays);
+  const stats = getLatestStats();
+  const t = d.thresholds || {};
+  const sectionGoal = d.totalGoal;
+  const pct = Math.round(chapterWords / sectionGoal * 100);
+  const author = d.authorName || 'I';
+  const lastUpdated = new Date().toISOString().slice(0,10);
+
+  document.getElementById('page-title').innerHTML = `${author.split(' ')[0]} <em>Writes a Book</em>`;
+  document.getElementById('meta-info').innerHTML = `updated ${lastUpdated}`;
+
+  const app = document.getElementById('app');
+
+  if (activeTab === 'overview') {
+    app.innerHTML = buildOverview(d, days, totalWords, chapterWords, sectionGoal, pct, est, dailyAvg, wpp, stats, t);
+    renderProgressChart(days, totalWords, { ...d, totalGoal: sectionGoal });
+    renderSessionsChart();
+  } else if (activeTab === 'style') {
+    app.innerHTML = buildStyle(d, stats, t, dailyAvg);
+    renderStyleChart(days);
+  } else if (activeTab === 'chapters') {
+    app.innerHTML = buildChapters(d, wpp);
+  } else if (activeTab === 'habits') {
+    app.innerHTML = buildHabits(d);
+    renderHoursChart();
+    renderDayBoxes();
+  }
 }
 
-function buildFileDetail() {
-  const days = getFileDays(selectedFile);
-  const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
-  const stats = getLatestFileStats(selectedFile);
-  const t = progress.thresholds || {};
-  const shortName = selectedFile.split('/').pop().replace('.md', '');
+// ── Overview ──
+function buildOverview(d, days, totalWords, chapterWords, sectionGoal, pct, est, dailyAvg, wpp, stats, t) {
+  return `
+    <div class="grid">
+      <div class="card">
+        <div class="val">${fmt(chapterWords)} <em style="font-size:0.7rem;">words</em></div>
+        <div class="sub">${pp(chapterWords)} pages</div>
+        <div class="lbl">manuscript</div>
+      </div>
+      <div class="card">
+        <div class="val">${pct}%</div>
+        <div class="sub">${fmt(chapterWords)} of ${fmt(sectionGoal)}</div>
+        <div class="lbl">progress</div>
+      </div>
+      <div class="card">
+        <div class="val">${fmt(dailyAvg)}</div>
+        <div class="lbl">avg words/day</div>
+      </div>
+      <div class="card">
+        <div class="val">${days.length}</div>
+        <div class="lbl">days writing</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="card"><h2>Progress</h2><div class="chart-wrap"><canvas id="progressChart"></canvas></div></div>
+      <div class="card"><h2>Recent sessions</h2><div class="chart-wrap"><canvas id="sessionsChart"></canvas></div></div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="card">
+        <h2>Where the words live</h2>
+        <div class="section-grid">${Object.entries(d.perSection||{}).map(([name,info]) => `
+          <div class="section-cell" style="cursor:pointer;opacity:${activeSection==='all'||activeSection===name?1:0.5};" onclick="switchSection('${name}')">
+            <div class="val">${fmt(info.words)}</div>
+            <div class="pages">${pp(info.words)} pp</div>
+            <div class="lbl">${name} &middot; ${info.files} files</div>
+          </div>`).join('')}</div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:12px;">
+      <div class="card full">
+        <h2>Estimates</h2>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:0.9rem;">
+          <span>At pace: <em>${est.paced||'--'}</em></span>
+          <span>On goal: <em>${est.onTrack||'--'}</em></span>
+          <span>${fmt(sectionGoal - chapterWords)} words remain</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── Style ──
+function buildStyle(d, stats, t, dailyAvg) {
+  if (!stats) return '<div class="card"><div style="color:var(--ink-faint);font-style:italic;">No manuscript data yet</div></div>';
+
+  const metrics = [
+    { label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: 'w', domain: [0,45], marks: [{v:10,n:'Hemingway'},{v:12,n:'Rowling'},{v:17,n:'Avg fiction'},{v:40,n:'Faulkner'}] },
+    { label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20,65], marks: [{v:25,n:'Potter'},{v:30,n:'Da Vinci'},{v:45,n:'News'},{v:55,n:'Academic'}] },
+    { label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0,100], marks: [{v:30,n:'Tolkien'},{v:40,n:'Rowling'},{v:60,n:'Hemingway'}] },
+    { label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0,12], marks: [{v:2,n:'Good fiction'},{v:4,n:'News'},{v:10,n:'Academic'}] },
+    { label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '', domain: [0,18], marks: [{v:5,n:'King'},{v:10,n:'Bestsellers'},{v:15,n:'Purple'}] },
+    { label: 'Vocab range', value: Math.round(stats.ttr), unit: '', domain: [30,90], marks: [{v:35,n:'Simple'},{v:47,n:'Avg fiction'},{v:55,n:'Hemingway'},{v:70,n:'Joyce'},{v:85,n:'Shakespeare'}] },
+    { label: 'Rewriting', value: d.editRatio, unit: '%', domain: [0,35], marks: [{v:5,n:'Draft'},{v:20,n:'Revision'},{v:30,n:'Polish'}] },
+    { label: 'Daily writing', value: dailyAvg, unit: 'w', domain: [0,2800], marks: [{v:300,n:'Nabokov'},{v:500,n:'Hemingway'},{v:1000,n:'Rowling'},{v:2000,n:'King'},{v:2500,n:'Sanderson'}] },
+  ];
+
+  const offsets = ['-16px','-28px','10px','22px'];
 
   return `
-  <div class="top-bar">
-    <h1>${shortName}</h1>
-    <div style="display:flex;gap:8px;">
-      <button class="btn" onclick="switchFile(null)">← Back</button>
+    <div class="grid">
+      <div class="card full"><h2>Style at a glance</h2>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:0.8rem;">${metrics.map(m =>
+          `<span style="font-family:'IBM Plex Mono',monospace;font-size:0.65rem;border:1px solid var(--line);padding:3px 8px;color:var(--ink-light);">${m.label} <strong>${m.value}${m.unit}</strong></span>`
+        ).join('')}</div>
+      </div>
     </div>
-  </div>
 
-  <div class="stats">
-    <div class="stat-card green">
-      <div class="stat-value">${fmt(totalWords)}</div>
-      <div style="color:var(--green);font-size:0.85rem;font-weight:500;margin-bottom:2px;">${Math.round(totalWords / (progress.wordsPerPage || 300))} pages</div>
-      <div class="stat-label">Words</div>
+    <div class="grid" style="margin-top:12px;">
+      <div class="card full"><h2>Style over time</h2><div class="chart-wrap"><canvas id="styleChart"></canvas></div></div>
     </div>
-    ${stats ? `
-    <div class="stat-card has-tip ${metricColor(stats.sentenceLengthAvg, t.sentenceLengthAvg)}">
-      <div class="stat-value">${Math.round(stats.sentenceLengthAvg)}</div>
-      <div class="stat-label">Sentence Length</div>
-      ${tip('sentenceLengthAvg', stats.sentenceLengthAvg)}
-    </div>
-    <div class="stat-card has-tip ${metricColor(stats.lix, t.lix)}">
-      <div class="stat-value">${Math.round(stats.lix)}</div>
-      <div class="stat-label">LIX</div>
-      ${tip('lix', stats.lix)}
-    </div>
-    <div class="stat-card has-tip ${metricColor(stats.dialogueRatio, t.dialogueRatio)}">
-      <div class="stat-value">${Math.round(stats.dialogueRatio)}%</div>
-      <div class="stat-label">Dialogue</div>
-      ${tip('dialogueRatio', stats.dialogueRatio)}
-    </div>
-    <div class="stat-card has-tip ${metricColor(stats.passiveRatio, t.passiveRatio)}">
-      <div class="stat-value">${Math.round(stats.passiveRatio)}</div>
-      <div class="stat-label">Passive /1000w</div>
-      ${tip('passiveRatio', stats.passiveRatio)}
-    </div>
-    <div class="stat-card has-tip ${metricColor(stats.adverbRatio, t.adverbRatio)}">
-      <div class="stat-value">${Math.round(stats.adverbRatio)}</div>
-      <div class="stat-label">Adverbs /1000w</div>
-      ${tip('adverbRatio', stats.adverbRatio)}
-    </div>
-    <div class="stat-card has-tip ${metricColorInv(stats.ttr, t.ttr)}">
-      <div class="stat-value">${Math.round(stats.ttr)}</div>
-      <div class="stat-label">Vocab range</div>
-      ${tip('ttr', stats.ttr)}
-    </div>
-    <div class="stat-card">
-      <div class="stat-value" style="color:${stats.sentimentPolarity >= 0 ? 'var(--green)' : 'var(--red)'}">${stats.sentimentPolarity > 0 ? '+' : ''}${stats.sentimentPolarity}</div>
-      <div class="stat-label">Sentiment</div>
-    </div>
-    ` : '<div class="stat-card" style="grid-column:span 4;"><div class="stat-label">No text metrics for this file</div></div>'}
-  </div>
 
-  <div class="charts">
-    <div class="chart-box">
-      <h2>Daily Words ${chartTip('fileDaily')}</h2>
-      <canvas id="fileDailyChart"></canvas>
-    </div>
-    <div class="chart-box">
-      <h2>Cumulative ${chartTip('fileCum')}</h2>
-      <canvas id="fileCumChart"></canvas>
-    </div>
-  </div>
-
-  <p style="font-size:0.7rem;color:var(--text-muted);margin-top:8px;">${selectedFile}</p>
-  `;
+    <div class="grid" style="margin-top:12px;">
+      ${metrics.map(m => {
+        const mpct = Math.min((m.value - m.domain[0])/(m.domain[1] - m.domain[0])*100, 100);
+        return `<div class="card">
+          <h2>${m.label} <strong>${m.value}${m.unit}</strong></h2>
+          <div class="metric-line">
+            <div class="track"></div>
+            <div class="fill" style="width:${mpct}%"></div>
+            <div class="marker" style="left:${mpct}%"></div>
+            <div class="mark-label" style="left:${mpct}%">${m.value}${m.unit}</div>
+            ${m.marks.map((mk,mi) => {
+              const rpct = (mk.v - m.domain[0])/(m.domain[1] - m.domain[0])*100;
+              const top = offsets[mi % offsets.length];
+              return `<div class="ref" style="left:${rpct}%"></div><div class="ref-label" style="left:${rpct}%;top:${top};">${mk.n} ${mk.v}${m.unit}</div>`;
+            }).join('')}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
 }
 
-function renderFileDetailCharts() {
-  const days = getFileDays(selectedFile);
-  renderFileDailyChart(days);
-  renderFileCumChart(days);
+// ── Chapters ──
+function buildChapters(d, wpp) {
+  const chapters = d.chapterWordCounts || {};
+  const target = d.chapterTargetWords || 2500;
+  const sorted = Object.entries(chapters).sort((a,b) => a[0].localeCompare(b[0]));
+  return `
+    <div class="grid">
+      <div class="card full"><h2>Chapter word counts</h2>
+        <div class="chapter-list">
+          ${sorted.map(([path, wc]) => {
+            const name = path.split('/').pop().replace('.md','');
+            const cpct = Math.min(Math.round(wc/target*100),100);
+            return `<div class="chapter-item">
+              <span class="title">${name}</span>
+              <div class="bar"><span style="width:${cpct}%"></span></div>
+              <span class="num">${fmt(wc)} w &middot; ${pp(wc)} pp</span>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
 }
 
-function renderFileDailyChart(days) {
-  const ctx = document.getElementById('fileDailyChart');
-  if (!ctx) return;
-  Chart.getChart('fileDailyChart')?.destroy();
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: days.map(d => d.date),
-      datasets: [
-        { label: 'Added', data: days.map(d => d.wordsAdded), backgroundColor: '#3fb95055', borderColor: '#3fb950', borderWidth: 1 },
-        { label: 'Removed', data: days.map(d => -d.wordsRemoved), backgroundColor: '#f8514955', borderColor: '#f85149', borderWidth: 1 },
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
-      }
-    }
-  });
-}
-
-function renderFileCumChart(days) {
-  const ctx = document.getElementById('fileCumChart');
-  if (!ctx) return;
-  Chart.getChart('fileCumChart')?.destroy();
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: days.map(d => d.date),
-      datasets: [{
-        label: 'Words', data: days.map(d => d.totalWords),
-        borderColor: '#58a6ff', backgroundColor: '#58a6ff22', fill: true, tension: 0.3, pointRadius: 4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#8b949e' } } },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
-      }
-    }
-  });
-}
-
-// ── Filtered day stats by section ──
-function getFilteredDays() {
-  if (activeSection === 'all') return progress.days;
-
-  // Recompute per-day stats from files matching the section
-  const dayMap = new Map();
-  for (const day of progress.days) {
-    const key = day.date;
-    if (!dayMap.has(key)) {
-      dayMap.set(key, { date: key, wordsAdded: 0, wordsRemoved: 0, totalWords: 0 });
-    }
-    const d = dayMap.get(key);
-    for (const f of day.files) {
-      if (f.section !== activeSection || f.deleted) continue;
-      d.wordsAdded += f.wordsAdded;
-      d.wordsRemoved += f.wordsRemoved;
-    }
-  }
-  const days = [...dayMap.values()].sort((a, b) => a.date.localeCompare(b.date));
-  let running = 0;
-  for (const d of days) {
-    running += d.wordsAdded - d.wordsRemoved;
-    d.totalWords = running;
-  }
-  return days;
+// ── Habits ──
+function buildHabits(d) {
+  return `
+    <div class="grid">
+      <div class="card"><h2>When I write</h2><div class="chart-wrap"><canvas id="hoursChart"></canvas></div></div>
+      <div class="card"><h2>Which days I show up</h2><div id="dayBoxes"></div></div>
+    </div>`;
 }
 
 // ── Charts ──
-function renderCharts() {
-  renderDailyChart();
-  renderCumulativeChart();
-  renderStyleChart();
-  renderHoursChart();
-  renderVocabChart();
-  renderSentimentChart();
-}
-
-function renderDailyChart() {
-  const ctx = document.getElementById('dailyChart');
+function renderProgressChart(days, totalWords, d) {
+  const ctx = document.getElementById('progressChart');
   if (!ctx) return;
-  const days = getFilteredDays();
-  const labels = days.map(d => d.date);
-  Chart.getChart('dailyChart')?.destroy();
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [
-        { label: 'Added', data: days.map(d => d.wordsAdded), backgroundColor: '#3fb95055', borderColor: '#3fb950', borderWidth: 1 },
-        { label: 'Removed', data: days.map(d => -d.wordsRemoved), backgroundColor: '#f8514955', borderColor: '#f85149', borderWidth: 1 },
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
-      scales: {
-        x: { ticks: { color: '#8b949e', maxTicksLimit: 14 }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
-      }
-    }
-  });
+  const dark = document.body.classList.contains('dark');
+  const ink = dark?'#d4c5a9':'#22211f';
+  const grid = dark?'#2d261e':'#e8e3d7';
+  const faint = dark?'#c9a96e':'#8b6914';
+  const goalCol = dark?'#3a3228':'#d8d3c7';
+  const labels = days.map(d=>d.date);
+  const paceBase = d.dailyGoal;
+  const est = d.estimatedFinish||{};
+  const dailyAvg = totalWords/days.length;
+  const extLabels=[...labels], extActual=days.map(d=>d.totalWords), extGoal=days.map((_,i)=>paceBase*(i+1)), extPace=days.map((_,i)=>paceBase*(i+1));
+  const lastDate=new Date(days[days.length-1].date);
+  const onTrackDate=est.onTrack?new Date(est.onTrack):null;
+  const pacedDate=est.paced?new Date(est.paced):null;
+  const endDate=(onTrackDate&&pacedDate)?new Date(Math.max(onTrackDate,pacedDate)):(onTrackDate||pacedDate||new Date(Date.now()+30*86400000));
+  const cursor=new Date(lastDate);cursor.setDate(cursor.getDate()+1);
+  let pGoal=totalWords,pPace=totalWords;
+  while(cursor<=endDate){extLabels.push(cursor.toISOString().slice(0,10));extActual.push(null);pGoal=Math.min(pGoal+paceBase,d.totalGoal);pPace=Math.min(pPace+dailyAvg,d.totalGoal);extGoal.push(pGoal);extPace.push(pPace);cursor.setDate(cursor.getDate()+1);}
+  Chart.getChart('progressChart')?.destroy();
+  new Chart(ctx,{type:'line',data:{labels:extLabels,datasets:[{data:extActual,borderColor:ink,borderWidth:1.5,pointRadius:1,pointBackgroundColor:dark?'#c9a96e':'#8b6914',tension:0.2,spanGaps:false},{data:extLabels.map(()=>d.totalGoal),borderColor:goalCol,borderWidth:1,borderDash:[4,8],pointRadius:0},{data:extGoal,borderColor:dark?'#7a9a6e33':'#c0d6b8',borderWidth:1,borderDash:[2,6],pointRadius:0},{data:extPace,borderColor:dark?'#c9a96e33':'#d4c8a8',borderWidth:1,borderDash:[1,8],pointRadius:0}]},options:{responsive:!0,animation:{duration:1200,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,maxTicksLimit:8,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
 }
 
-function renderCumulativeChart() {
-  const ctx = document.getElementById('cumulativeChart');
-  if (!ctx) return;
-  const days = getFilteredDays();
-  const labels = days.map(d => d.date);
-  const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
-  const isAll = activeSection === 'all';
-  const goalTarget = isAll ? progress.totalGoal : Math.round(progress.totalGoal * (totalWords / (progress.totalWords || 1)));
-  const paceBase = isAll ? progress.dailyGoal : Math.round(progress.dailyGoal * (totalWords / (progress.totalWords || 1)));
-  const est = progress.estimatedFinish || {};
-
-  // Build extended labels to later estimate date
-  const today = new Date();
-  const lastDate = days.length > 0 ? new Date(days[days.length - 1].date) : today;
-  const onTrackDate = est.onTrack ? new Date(est.onTrack) : null;
-  const pacedDate = est.paced ? new Date(est.paced) : null;
-  const endDate = onTrackDate && pacedDate ? new Date(Math.max(onTrackDate, pacedDate)) : (onTrackDate || pacedDate || new Date(today.getTime() + 30*86400000));
-  
-  const extLabels = [...labels];
-  const extActual = days.map(d => d.totalWords);
-  const extGoalPace = days.map((_, i) => paceBase * (i + 1));
-  const extCurrentPace = days.map((_, i) => paceBase * (i + 1)); // placeholder, recalc below
-  
-  // Current pace: average words/day so far
-  const dailyAvg = days.length > 0 ? totalWords / Math.max((new Date(days[days.length-1].date) - new Date(days[0].date)) / 86400000 + 1, 1) : paceBase;
-  
-  // Extend labels day by day from lastDate+1 to endDate
-  const cursor = new Date(lastDate);
-  cursor.setDate(cursor.getDate() + 1);
-  let dIdx = days.length;
-  let projGoal = totalWords; // projected at daily goal pace
-  let projPace = totalWords; // projected at current pace
-  
-  while (cursor <= endDate) {
-    const dateStr = cursor.toISOString().slice(0, 10);
-    extLabels.push(dateStr);
-    extActual.push(null); // no actual data beyond today
-    projGoal = Math.min(projGoal + paceBase, goalTarget);
-    projPace = Math.min(projPace + dailyAvg, goalTarget);
-    extGoalPace.push(projGoal);
-    extCurrentPace.push(projPace);
-    cursor.setDate(cursor.getDate() + 1);
-    dIdx++;
-  }
-  
-  Chart.getChart('cumulativeChart')?.destroy();
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: extLabels,
-      datasets: [
-        {
-          label: 'Total Words', data: extActual,
-          borderColor: sectionColors[activeSection] || '#58a6ff', backgroundColor: (sectionColors[activeSection] || '#58a6ff') + '22',
-          fill: true, tension: 0.3, pointRadius: 3, spanGaps: false
-        },
-        {
-          label: 'Goal', data: extLabels.map(() => goalTarget),
-          borderColor: '#d2991d', borderDash: [6, 4], pointRadius: 0, fill: false
-        },
-        {
-          label: est.onTrack ? 'Daily Goal \u2192 ' + est.onTrack : 'Daily Goal Pace', data: extGoalPace,
-          borderColor: '#3fb950', borderDash: [3, 6], pointRadius: 0, fill: false
-        },
-        {
-          label: est.paced ? 'Current Pace \u2192 ' + est.paced : 'Current Pace', data: extCurrentPace,
-          borderColor: '#58a6ff88', borderDash: [2, 8], pointRadius: 0, fill: false
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
-      scales: {
-        x: { ticks: { color: '#8b949e', maxTicksLimit: 14 }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, title: { display: true, text: 'words', color: '#8b949e' } }
-      }
-    }
-  });
+function renderSessionsChart() {
+  const ctx=document.getElementById('sessionsChart');
+  if(!ctx)return;
+  const dark=document.body.classList.contains('dark');
+  const ink=dark?'#c9a96e':'#8b6914';
+  const grid=dark?'#2d261e':'#e8e3d7';
+  const faint=dark?'#c9a96e':'#8b6914';
+  const recent=progress.days.slice(-10);
+  Chart.getChart('sessionsChart')?.destroy();
+  new Chart(ctx,{type:'bar',data:{labels:recent.map(d=>d.date.slice(5)),datasets:[{data:recent.map(d=>d.wordsNet),backgroundColor:recent.map(d=>d.wordsNet>0?ink:grid),borderWidth:0,borderRadius:0}]},options:{responsive:!0,animation:{duration:800,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{display:!1}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
 }
 
-// ── Chart tooltip info ──
-const CHART_TIPS = {
-  daily: {
-    title: 'Daily Words',
-    desc: 'Words added (green) and removed (red) per day. Each bar = one day of writing. Deleted files excluded from net count but still shown for historical context.',
-    bench: 'Stephen King writes 2,000 words/day · Hemingway 500 · Trollope 250 words/15min · NaNoWriMo pace 1,667/day',
-  },
-  cumulative: {
-    title: 'Cumulative Progress',
-    desc: 'Total words over time. Solid blue = actual words. Dashed yellow = total goal. Dashed green = daily goal pace projection. Dotted blue = current pace projection. Dotted lines extend to estimated finish dates.',
-    bench: 'The Great Gatsby ~47,000 words · Fight Club ~50,000 · Harry Potter 1 ~77,000 · Average novel 80,000–100,000',
-  },
-  style: {
-    title: 'Writing Style',
-    desc: 'Tracks sentence length and readability over time. Left Y-axis: words per sentence (blue) and LIX score (yellow). Right Y-axis: dialogue %, passive voice, and adverb density.',
-    bench: 'Hemingway avg 10 words/sentence · Rowling 12 · Faulkner 40+ · LIX: Harry Potter 25 · Newspapers 45 · Academic 55+',
-  },
-  hours: {
-    title: 'Writing Schedule',
-    desc: 'When commits happen by hour of day. Green bars = hours with commits. Helps identify your most productive writing times.',
-    bench: 'Morning writers: Hemingway (dawn) · Night writers: Kafka (late night) · Afternoon: Trollope (5:30am–8am before work)',
-  },
-  vocab: {
-    title: 'Vocabulary Richness',
-    desc: 'Vocab range (blue) = unique words ÷ total words. Honoré R (green) = lexical density. Top-100 word % (dashed yellow) = common word ratio.',
-    bench: 'Shakespeare 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
-  },
-  sentiment: {
-    title: 'Sentiment Trend',
-    desc: 'Emotional tone over time. Positive = bright/hopeful scenes. Negative = dark/conflict scenes. Polarity range −100 to +100.',
-    bench: 'Tragedies −50 to −20 · Thrillers −10 to +10 · Comedies +20 to +50 · Neutral 0',
-  },
-  fileDaily: {
-    title: 'Daily Words',
-    desc: 'Words added and removed for this specific file only. Each bar = one day where this file was modified.',
-    bench: 'Average chapter 2,000–5,000 words · Scene 1,000–2,000 · Short story 1,000–7,500',
-  },
-  fileCum: {
-    title: 'Cumulative',
-    desc: 'Total words in this file over time. Track growth of individual chapters or character sheets.',
-    bench: 'Chapter target typically 2,000–5,000 words · Novella 20,000–40,000 · Novel 50,000+ ',
-  },
-}
-
-function chartTip(key) {
-  const c = CHART_TIPS[key]
-  if (!c) return ''
-  return `<span class="has-tip" style="display:inline-block;margin-left:6px;font-size:0.8rem;color:var(--text-muted);cursor:help;vertical-align:middle;">ⓘ<span class="tip"><b>${c.title}</b><br>${c.desc}<div class="bench"><b>Benchmarks:</b><br>${c.bench.replace(/ · /g, '<br>')}</div></span></span>`
-}
-
-// ── Metric tooltip info ──
-const METRIC_INFO = {
-  sentenceLengthAvg: {
-    name: 'Avg Sentence Length',
-    desc: 'Average words per sentence. Short sentences create urgency and tension. Long sentences build atmosphere and flow.',
-    calc: 'Total words ÷ number of sentences',
-    bench: 'Hemingway 10 · Rowling 12 · Average fiction 15–20 · Faulkner 40+',
-  },
-  sentenceLengthStdDev: {
-    name: 'Sentence Variation',
-    desc: 'Standard deviation of sentence lengths. Higher values mean more varied rhythm. Too low sounds monotonous.',
-    calc: 'Standard deviation of words per sentence',
-    bench: 'Good fiction typically 5–10',
-  },
-  lix: {
-    name: 'LIX Readability',
-    desc: 'Readability score. Combines sentence length and long-word ratio. Lower = easier to read.',
-    calc: '(words ÷ sentences) + (long words × 100 ÷ words)',
-    bench: 'Harry Potter 25 · Da Vinci Code 30 · Newspapers 45 · Academic 55+',
-  },
-  dialogueRatio: {
-    name: 'Dialogue Ratio',
-    desc: 'Percentage of content lines containing dialogue (quoted speech). High ratio = talk-driven, low = description-driven.',
-    calc: 'Lines with quotes ÷ total content lines × 100',
-    bench: 'Hemingway 60% · Rowling 40% · Tolkien 30% · Thrillers often 50%+',
-  },
-  passiveRatio: {
-    name: 'Passive Voice',
-    desc: 'Passive verb forms per 1000 words. Passive voice creates distance and formality. Active voice is more engaging.',
-    calc: 'S-passives + periphrastic forms per 1000 words',
-    bench: 'Good fiction <2 · News articles 3–5 · Academic 10+',
-  },
-  adverbRatio: {
-    name: 'Adverb Density',
-    desc: 'Adverbs per 1000 words. Stephen King: "The road to hell is paved with adverbs." Fewer adverbs = stronger prose.',
-    calc: 'Adverbs (-vis, -ly, -ment forms + common list) per 1000 words',
-    bench: 'King recommends <5 · Bestsellers avg 8–12 · Purple prose 15+',
-  },
-  ttr: {
-    name: 'Vocabulary Range',
-    desc: 'Unique words divided by total words. Higher means richer, less repetitive language. Sensitive to text length.',
-    calc: 'Unique words ÷ total words × 100',
-    bench: 'Shakespeare 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
-  },
-  honoreR: {
-    name: "Honoré's R",
-    desc: 'Lexical density measure robust to text length. Uses hapax legomena (words used only once). Higher = richer vocabulary.',
-    calc: '100 × log(words) ÷ (1 − hapax ÷ unique)',
-    bench: 'Rich literary prose 1000+ · Average fiction 600–900 · Simple text 400–600',
-  },
-  topWordFreq: {
-    name: 'Top-100 Word Density',
-    desc: 'Percentage of text made up by the 100 most frequent words. High values indicate repetition or limited vocabulary.',
-    calc: 'Occurrences of top 100 words ÷ total words × 100',
-    bench: 'Varied prose 45–55% · Average 55–60% · Repetitive 65%+',
-  },
-  sentimentPolarity: {
-    name: 'Sentiment Polarity',
-    desc: 'Balance of positive vs negative emotion words. Positive = hopeful/bright scenes, negative = dark/conflict scenes.',
-    calc: '(positive − negative) ÷ (positive + negative) × 100. Range −100 to +100.',
-    bench: 'Tragedies −50 to −20 · Thrillers −10 to +10 · Comedies +20 to +50',
-  },
-  editRatio: {
-    name: 'Rewriting',
-    desc: 'Percentage of word changes that were modifications (not pure additions). High ratio = heavy editing/rewriting phase.',
-    calc: 'Changed words ÷ total added words × 100',
-    bench: 'First draft 0–10% · Revision 15–30% · Polish 5–10%',
-  },
-}
-
-function tip(key, value) {
-  const m = METRIC_INFO[key]
-  if (!m) return ''
-  const level = getLevel(key, value)
-  return `
-  <span class="tip">
-    <b>${m.name}</b><br>
-    ${m.desc}<br><br>
-    <b>Formula:</b> ${m.calc}<br>
-    <b>Your score:</b> ${value} — <span style="color:${level.color}">${level.label}</span><br>
-    <div class="bench"><b>Benchmarks:</b><br>${m.bench.replace(/ · /g, '<br>')}</div>
-  </span>`
-}
-
-function getLevel(key, value) {
-  const t = progress?.thresholds || {}
-  const m = t[key]
-  if (!m) return { label: '', color: 'var(--text-muted)' }
-  if (m.goodMin !== undefined) {
-    if (value >= m.goodMin && value <= m.goodMax) return { label: 'Good', color: 'var(--green)' }
-    if (value >= m.warnMin && value <= m.warnMax) return { label: 'Warning', color: 'var(--orange)' }
-    return { label: 'Needs attention', color: 'var(--red)' }
-  }
-  if (key === 'ttr') {
-    if (value >= m.good) return { label: 'Good', color: 'var(--green)' }
-    if (value >= m.warn) return { label: 'Warning', color: 'var(--orange)' }
-    return { label: 'Needs attention', color: 'var(--red)' }
-  }
-  if (value <= m.good) return { label: 'Good', color: 'var(--green)' }
-  if (value <= m.warn) return { label: 'Warning', color: 'var(--orange)' }
-  return { label: 'Needs attention', color: 'var(--red)' }
-}
-
-// ── Compact metric strip ──
-function buildMetricStrip() {
-  const lastStats = getLatestTextStats();
-  if (!lastStats) return '';
-  const t = progress.thresholds || {};
-
-  const cards = [
-    { key: 'sentenceLengthAvg', label: 'Sentence Length', value: lastStats.sentenceLengthAvg, suffix: '' },
-    { key: 'lix', label: 'LIX', value: lastStats.lix, suffix: '' },
-    { key: 'dialogueRatio', label: 'Dialogue', value: lastStats.dialogueRatio, suffix: '%' },
-    { key: 'passiveRatio', label: 'Passive /1000w', value: lastStats.passiveRatio, suffix: '' },
-    { key: 'adverbRatio', label: 'Adverbs /1000w', value: lastStats.adverbRatio, suffix: '' },
-    { key: 'ttr', label: 'Vocab range', value: lastStats.ttr, suffix: '' },,
-  ];
-
-  const colorFn = (key, value) => key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
-
-  return `
-  <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
-    ${cards.map(c => `
-    <div class="stat-card has-tip ${colorFn(c.key, c.value)}" style="padding:10px 14px;">
-      <div class="stat-value" style="font-size:1.25rem;">${Math.round(c.value)}${c.suffix}</div>
-      <div class="stat-label" style="font-size:0.7rem;">${c.label}</div>
-      ${tip(c.key, c.value)}
-    </div>`).join('')}
-    <div class="stat-card has-tip" style="padding:10px 14px;">
-      <div class="stat-value" style="font-size:1.25rem;">${Math.round(progress.editRatio)}%</div>
-      <div class="stat-label" style="font-size:0.7rem;">Rewriting</div>
-      ${tip('editRatio', progress.editRatio)}
-    </div>
-  </div>`;
-}
-function metricColor(value, t) {
-  if (!t) return '';
-  // Range metric: goodMin/goodMax/warnMin/warnMax
-  if (t.goodMin !== undefined) {
-    if (value >= t.goodMin && value <= t.goodMax) return 'green';
-    if (value >= t.warnMin && value <= t.warnMax) return 'orange';
-    return 'red';
-  }
-  // Threshold metric: good/warn (lower is better for ratios)
-  if (value <= t.good) return 'green';
-  if (value <= t.warn) return 'orange';
-  return 'red';
-}
-
-function metricColorInv(value, t) {
-  // Inverted: higher is better (TTR)
-  if (!t) return '';
-  if (value >= t.good) return 'green';
-  if (value >= t.warn) return 'orange';
-  return 'red';
-}
-
-function getDaysWithStats() {
-  if (activeSection === 'all') return progress.days.filter(d => d.textStats);
-  return progress.days.filter(day =>
-    day.files.some(f => f.section === activeSection && f.textStats && !f.deleted)
-  ).map(day => {
-    const sectionFiles = day.files.filter(f => f.section === activeSection && f.textStats && !f.deleted);
-    if (!sectionFiles.length) return { ...day, textStats: null };
-    const statsList = sectionFiles.map(f => f.textStats);
-    return { ...day, textStats: aggregateTextStats(statsList) };
-  }).filter(d => d.textStats);
-}
-
-function getLatestTextStats() {
-  // Find files with textStats in the active section across the latest day
-  for (let i = progress.days.length - 1; i >= 0; i--) {
-    const day = progress.days[i];
-    if (activeSection === 'all') {
-      if (day.textStats) return day.textStats;
-    } else {
-      const sectionFiles = day.files.filter(f => f.section === activeSection && f.textStats);
-      if (sectionFiles.length > 0) {
-        // Aggregate textStats from section files
-        return aggregateTextStats(sectionFiles.map(f => f.textStats));
-      }
-    }
-  }
-  return null;
-}
-
-function aggregateTextStats(statsList) {
-  if (!statsList.length) return null;
-  const first = statsList[0];
-  const keys = Object.keys(first).filter(k => k !== 'entities');
-  const result = {};
-  for (const key of keys) {
-    const values = statsList.map(s => s[key]).filter(v => typeof v === 'number');
-    if (values.length) result[key] = values.reduce((a, b) => a + b, 0) / values.length;
-  }
-  // Merge entities
-  result.entities = {};
-  for (const s of statsList) {
-    if (s.entities) {
-      for (const [name, count] of Object.entries(s.entities)) {
-        result.entities[name] = (result.entities[name] || 0) + count;
-      }
-    }
-  }
-  return result;
-}
-
-// ── Style chart (writing quality over time) ──
-function renderStyleChart() {
-  const ctx = document.getElementById('styleChart');
-  if (!ctx) return;
-  const daysWithStats = getDaysWithStats();
+function renderStyleChart(days) {
+  const ctx=document.getElementById('styleChart');
+  if(!ctx)return;
+  const dark=document.body.classList.contains('dark');
+  const ink=dark?'#d4c5a9':'#22211f';
+  const gold=dark?'#c9a96e':'#8b6914';
+  const grid=dark?'#2d261e':'#e8e3d7';
+  const faint=dark?'#c9a96e':'#8b6914';
+  const withStats=days.filter(d=>d.textStats);
   Chart.getChart('styleChart')?.destroy();
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: daysWithStats.map((d) => d.date),
-      datasets: [
-        {
-          label: 'Sentence Length',
-          data: daysWithStats.map((d) => d.textStats.sentenceLengthAvg),
-          borderColor: '#58a6ff',
-          tension: 0.3,
-          yAxisID: 'y',
-        },
-        {
-          label: 'LIX',
-          data: daysWithStats.map((d) => d.textStats.lix),
-          borderColor: '#d2991d',
-          tension: 0.3,
-          yAxisID: 'y',
-        },
-        {
-          label: 'Dialogue %',
-          data: daysWithStats.map((d) => d.textStats.dialogueRatio),
-          borderColor: '#3fb950',
-          tension: 0.3,
-          yAxisID: 'y1',
-          borderDash: [4, 4],
-        },
-        {
-          label: 'Passive /1000w',
-          data: daysWithStats.map((d) => d.textStats.passiveRatio),
-          borderColor: '#f85149',
-          tension: 0.3,
-          yAxisID: 'y1',
-          borderDash: [2, 6],
-        },
-        {
-          label: 'Adverb /1000w',
-          data: daysWithStats.map((d) => d.textStats.adverbRatio),
-          borderColor: '#bc8cff',
-          tension: 0.3,
-          yAxisID: 'y1',
-          borderDash: [2, 6],
-        },
-      ],
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#8b949e', font: { size: 10 } } } },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: {
-          type: 'linear',
-          position: 'left',
-          title: { display: true, text: 'words / score', color: '#8b949e' },
-          ticks: { color: '#8b949e' },
-          grid: { color: '#21262d' },
-        },
-        y1: {
-          type: 'linear',
-          position: 'right',
-          title: { display: true, text: '% / per 1000w', color: '#8b949e' },
-          ticks: { color: '#8b949e' },
-          grid: { display: false },
-          min: 0,
-        },
-      },
-    },
-  });
+  new Chart(ctx,{type:'line',data:{labels:withStats.map(d=>d.date),datasets:[{data:withStats.map(d=>d.textStats.sentenceLengthAvg),borderColor:ink,borderWidth:1.5,pointRadius:0,tension:0.2},{data:withStats.map(d=>d.textStats.lix),borderColor:gold,borderWidth:1,pointRadius:0,tension:0.2,borderDash:[3,5]},{data:withStats.map(d=>d.textStats.dialogueRatio),borderColor:dark?'#7a9a6e':'#4a6741',borderWidth:1,pointRadius:0,tension:0.2}]},options:{responsive:!0,animation:{duration:1000,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,maxTicksLimit:6,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
 }
 
-// ── Commit hour heatmap ──
 function renderHoursChart() {
-  const ctx = document.getElementById('hoursChart');
-  if (!ctx) return;
-  const hours = progress.commitHours || {};
-  const labels = [...Array(24).keys()].map(h => String(h).padStart(2,'0') + ':00');
-  const data = [...Array(24).keys()].map(h => hours[h] || 0);
+  const ctx=document.getElementById('hoursChart');
+  if(!ctx)return;
+  const dark=document.body.classList.contains('dark');
+  const ink=dark?'#c9a96e':'#8b6914';
+  const grid=dark?'#2d261e':'#e8e3d7';
+  const faint=dark?'#c9a96e':'#8b6914';
+  const hours=progress.commitHours||{};
+  const labels=Array.from({length:24},(_,i)=>i);
   Chart.getChart('hoursChart')?.destroy();
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Commits', data,
-        backgroundColor: data.map(v => v > 0 ? '#3fb95088' : '#30363d'),
-        borderColor: '#3fb950', borderWidth: 1
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: '#8b949e', maxTicksLimit: 12 }, grid: { color: '#21262d' } },
-        y: { ticks: { color: '#8b949e', stepSize: 1 }, grid: { color: '#21262d' } }
-      }
-    }
-  });
+  new Chart(ctx,{type:'bar',data:{labels:labels.map(h=>`${h}`),datasets:[{data:labels.map(h=>hours[h]||0),backgroundColor:labels.map(h=>(hours[h]||0)>0?ink:grid),borderWidth:0,borderRadius:0}]},options:{responsive:!0,animation:{duration:800,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{display:!1}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
 }
 
-// ── Vocabulary chart (TTR + Honoré's R) ──
-function renderVocabChart() {
-  const ctx = document.getElementById('vocabChart');
-  if (!ctx) return;
-  const daysWithStats = getDaysWithStats();
-  Chart.getChart('vocabChart')?.destroy();
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: daysWithStats.map((d) => d.date),
-      datasets: [
-        {
-          label: 'Vocab range (x10)',
-          data: daysWithStats.map((d) => d.textStats.ttr),
-          borderColor: '#58a6ff', tension: 0.3, yAxisID: 'y',
-        },
-        {
-          label: 'Honoré\'s R',
-          data: daysWithStats.map((d) => d.textStats.honoreR),
-          borderColor: '#3fb950', tension: 0.3, yAxisID: 'y1',
-        },
-        {
-          label: 'Top-100 Word %',
-          data: daysWithStats.map((d) => d.textStats.topWordFreq),
-          borderColor: '#d2991d', tension: 0.3, yAxisID: 'y1', borderDash: [4, 4],
-        },
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { labels: { color: '#8b949e', font: { size: 11 } } } },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: {
-          type: 'linear', position: 'left',
-          title: { display: true, text: 'Vocab range', color: '#8b949e' },
-          ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, min: 0
-        },
-        y1: {
-          type: 'linear', position: 'right',
-          title: { display: true, text: 'score / %', color: '#8b949e' },
-          ticks: { color: '#8b949e' }, grid: { display: false }, min: 0
-        }
-      }
-    }
-  });
+function renderDayBoxes() {
+  const el=document.getElementById('dayBoxes');
+  if(!el)return;
+  const dayShort=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const dayCounts=[0,0,0,0,0,0,0];
+  for(const day of progress.days){const d=new Date(day.date).getDay();const idx=d===0?6:d-1;dayCounts[idx]++;}
+  const max=Math.max(...dayCounts,1);
+  el.innerHTML=`<div class="section-grid" style="margin-top:8px;">${dayShort.map((name,i)=>{const intensity=dayCounts[i]/max;return`<div class="section-cell" style="position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent);opacity:${(intensity*0.35).toFixed(2)};"></div><div class="val" style="position:relative;color:var(--accent);font-size:0.9rem;">${name}</div><div class="pages" style="position:relative;">${dayCounts[i]}</div></div>`}).join('')}</div>`;
 }
 
-// ── Sentiment chart ──
-function renderSentimentChart() {
-  const ctx = document.getElementById('sentimentChart');
-  if (!ctx) return;
-  const daysWithStats = getDaysWithStats();
-  Chart.getChart('sentimentChart')?.destroy();
-  new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: daysWithStats.map((d) => d.date),
-      datasets: [
-        {
-          label: 'Polarity (−100→+100)',
-          data: daysWithStats.map((d) => d.textStats.sentimentPolarity),
-          borderColor: '#bc8cff', backgroundColor: '#bc8cff22', fill: true,
-          tension: 0.3, pointRadius: 4,
-        },
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { labels: { color: '#8b949e', font: { size: 11 } } },
-        annotation: false,
-      },
-      scales: {
-        x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
-        y: {
-          min: -100, max: 100,
-          ticks: { color: '#8b949e', stepSize: 25 },
-          grid: { color: '#21262d' },
-          title: { display: true, text: 'sentiment', color: '#8b949e' }
-        }
-      }
-    }
-  });
+// ── Utils ──
+const getLatestStats = () => { for(let i=progress.days.length-1;i>=0;i--){if(progress.days[i].textStats)return progress.days[i].textStats;} return null; };
+
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  document.querySelector('.theme-toggle').textContent = document.body.classList.contains('dark') ? 'light' : 'dark';
+  renderTabs();
 }
 
-// ── Chapter word counts ──
-function buildChapterTable() {
-  const chapters = progress.chapterWordCounts || {};
-  const entries = Object.entries(chapters).sort((a,b) => b[1] - a[1]);
-  if (!entries.length) return '';
-  return `
-  <h2>Chapter Word Counts</h2>
-  <div style="overflow-x:auto;">
-  <table class="detail-table" style="margin-bottom:24px;">
-    <thead><tr><th>Chapter</th><th class="num">Words</th><th class="num">Pages</th><th class="num">Progress</th></tr></thead>
-    ${paginate(entries, ([path, wc]) => {
-        const name = path.split('/').pop().replace('.md','');
-        const pct = Math.round(wc / (progress.chapterTargetWords || 2500) * 100);
-        return `
-        <tr style="cursor:pointer;" onclick="switchFile('${path.replace(/'/g, "\\'")}')">
-          <td>${name}</td>
-          <td class="num">${fmt(wc)}</td>
-          <td class="num" style="color:var(--text-muted);">~${Math.round(wc / (progress.wordsPerPage || 300))}</td>
-          <td class="num"><span style="display:inline-block;width:100px;height:6px;background:#21262d;border-radius:3px;vertical-align:middle;"><span style="display:block;height:100%;width:${Math.min(pct,100)}%;background:${pct>=100?'#3fb950':'#58a6ff'};border-radius:3px;"></span></span> ${pct}%</td>
-        </tr>`;
-      }, 'chapterlist', 4)}
-  </table>
-  </div>`;
+function switchSection(section) {
+  activeSection = activeSection === section ? 'all' : section;
+  renderTabs();
 }
 
-// ── Settings ──
-function toggleSettings() {
-  if (!progress) return;
-  let panel = document.getElementById('settings-panel');
-  if (!panel) {
-    const t = progress.thresholds || {};
-    const row = (label, value) =>
-      `<div class="setting-row"><label>${label}</label><span class="setting-val">${value}</span></div>`
-    const thRow = (label, tObj) => {
-      if (!tObj) return ''
-      if (tObj.goodMin !== undefined) {
-        return row(label, `<span class="c-green">good</span> ${tObj.goodMin}–${tObj.goodMax} · <span class="c-orange">warn</span> ${tObj.warnMin}–${tObj.warnMax}`)
-      }
-      if (label.includes('TTR')) {
-        return row(label, `<span class="c-green">good ≥${tObj.good}</span> · <span class="c-orange">warn ≥${tObj.warn}</span> · <span class="c-red">below</span>`)
-      }
-      return row(label, `<span class="c-green">good ≤${tObj.good}</span> · <span class="c-orange">warn ≤${tObj.warn}</span> · <span class="c-red">above</span>`)
-    }
-
-    panel = document.createElement('div')
-    panel.id = 'settings-panel'
-    panel.className = 'settings-panel'
-    panel.innerHTML = `
-      <h2 style="margin-bottom:16px;">Config</h2>
-      ${row('Daily Word Goal', progress.dailyGoal.toLocaleString())}
-      ${row('Total Word Goal', progress.totalGoal.toLocaleString())}
-      ${row('Chapter Target', (progress.chapterTargetWords || 2500).toLocaleString() + ' words')}
-      ${row('Words Per Page', (progress.wordsPerPage || 300).toString())}
-      ${row('Text Analysis Section', progress.textAnalysisSection || 'Manuscript')}
-      ${row('Book Folder', progress.bookFolder || './Ruindykarna')}
-      ${row('Exclude Patterns', 'templates/**, **/.gitkeep, **/*.base, **/.sync-conflict*')}
-
-      <h3 style="margin-top:20px;margin-bottom:8px;font-size:0.85rem;">Metric Thresholds</h3>
-      <p style="font-size:0.7rem;color:var(--text-muted);margin-bottom:10px;">
-        <span class="c-green">●</span> Good · <span class="c-orange">●</span> Warning · <span class="c-red">●</span> Needs attention
-      </p>
-      ${thRow('Adverbs /1000w', t.adverbRatio)}
-      ${thRow('Passive /1000w', t.passiveRatio)}
-      ${thRow('Vocab range', t.ttr)}
-      ${thRow('LIX readability', t.lix)}
-      ${thRow('Sentence Length', t.sentenceLengthAvg)}
-      ${thRow('Dialogue Ratio', t.dialogueRatio)}
-      ${thRow('Top-100 Word %', t.topWordFreq)}
-
-      <p style="margin-top:18px;font-size:0.75rem;color:var(--text-muted);">
-        Edit <code>bookprogress.config.json</code> to change these values, then run <code>pnpm extract</code>.
-      </p>
-    `
-    document.getElementById('app').before(panel)
-  }
-  panel.classList.toggle('open')
-}
-
-// ── Helpers ──
-function fmt(n) { return n.toLocaleString(); }
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-// ── Start ──
-document.addEventListener('mouseover', (e) => {
-  const tip = e.target.closest('.has-tip')?.querySelector?.('.tip')
-  if (!tip) return
-  const rect = tip.getBoundingClientRect()
-  const vw = window.innerWidth
-  const vh = window.innerHeight
-  tip.style.top = ''
-  tip.style.bottom = ''
-  tip.style.left = ''
-  tip.style.right = ''
-  tip.style.display = 'block'
-  const nr = tip.getBoundingClientRect()
-  tip.style.display = ''
-  // Vertical: prefer above unless too close to top
-  if (rect.top - nr.height - 8 < 0) {
-    tip.style.top = Math.min(rect.bottom + 8, vh - nr.height - 8) + 'px'
+function share() {
+  const url = window.location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Writing Tracker', url });
   } else {
-    tip.style.bottom = (vh - rect.top + 8) + 'px'
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.querySelector('.btn');
+      btn.textContent = 'copied';
+      setTimeout(() => btn.textContent = 'share this page', 2000);
+    });
   }
-  // Horizontal: center on trigger, clamp to viewport
-  const maxW = Math.min(280, vw - 16)
-  tip.style.maxWidth = maxW + 'px'
-  tip.style.whiteSpace = 'normal'
-  tip.style.wordWrap = 'break-word'
-  let left = rect.left + rect.width / 2 - nr.width / 2
-  if (left < 8) left = 8
-  if (left + nr.width > vw - 8) left = vw - nr.width - 8
-  tip.style.left = left + 'px'
-})
+}
+
 refresh();
 </script>
 </body>

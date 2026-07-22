@@ -126,19 +126,7 @@
 
   @media (max-width: 700px) {
     .grid, .grid-3, .grid-4 { grid-template-columns: 1fr; }
-    body { padding: 12px 8px; font-size: 15px; }
-    h1 { font-size: 1.3rem; }
-    .card { padding: 10px; }
-    .card .val { font-size: 1.2rem; }
-    .section-grid { grid-template-columns: repeat(2, 1fr); }
-    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .tab { padding: 5px 10px; font-size: 0.6rem; white-space: nowrap; }
-    .metric-line { height: 44px; margin: 14px 0 24px; }
-    .chapter-item { gap: 6px; font-size: 0.7rem; }
-    .chapter-item .bar { width: 50px; }
-    .chapter-item .num { min-width: 55px; font-size: 0.55rem; }
-    .meta-row { font-size: 0.55rem; gap: 8px; }
-    .top-bar { gap: 4px; }
+    body { padding: 16px 10px; }
   }
 </style>
 </head>
@@ -148,12 +136,9 @@
   <h1 id="page-title">Writing <em>Tracker</em></h1>
   <div style="display:flex;gap:8px;align-items:center;">
     <span class="meta-row" style="margin:0;" id="meta-info"></span>
-    <button class="btn" onclick="toggleConfig()">config</button>
     <button class="theme-toggle" onclick="toggleTheme()">dark</button>
   </div>
 </div>
-
-<div id="config-panel" class="card" style="display:none;margin-bottom:12px;"></div>
 
 <div class="tabs">
   <button class="tab active" onclick="switchTab('overview')">Overview</button>
@@ -164,17 +149,11 @@
 
 <div id="app"><div style="color:var(--ink-faint);font-style:italic;padding:40px 0;">Loading...</div></div>
 
-<div style="text-align:center;margin-top:40px;padding-top:16px;border-top:1px solid var(--line);">
-  <button class="btn" onclick="share()" style="margin-right:12px;">share this page</button>
-  <span style="color:var(--ink-faint);font-size:0.7rem;font-style:italic;">Want to know when it is finished? <a href="mailto:hampus.adamsson@gmail.com" style="color:var(--accent);">Send me an email</a></span>
-</div>
-
 <script>
 // __PROGRESS_JSON__
 
 let progress = null;
 let activeTab = 'overview';
-let activeSection = 'all';
 
 function refresh() {
   try {
@@ -193,31 +172,7 @@ const pp = w => Math.round(w / (progress.wordsPerPage || 300));
 function switchTab(tab) {
   activeTab = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().startsWith(tab)));
-  document.getElementById('config-panel').style.display = 'none';
   renderTabs();
-}
-
-function toggleConfig() {
-  const panel = document.getElementById('config-panel');
-  if (panel.style.display === 'none') {
-    const d = progress;
-    const t = d.thresholds || {};
-    panel.innerHTML = `
-      <h2>Config</h2>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;font-size:0.8rem;margin-top:8px;">
-        <div><span style="color:var(--ink-faint);">Daily goal</span> <strong>${d.dailyGoal}</strong></div>
-        <div><span style="color:var(--ink-faint);">Total goal</span> <strong>${fmt(d.totalGoal)}</strong></div>
-        <div><span style="color:var(--ink-faint);">Chapter target</span> <strong>${d.chapterTargetWords||2500}</strong></div>
-        <div><span style="color:var(--ink-faint);">Words per page</span> <strong>${d.wordsPerPage||300}</strong></div>
-        <div><span style="color:var(--ink-faint);">Tracked section</span> <strong>${d.textAnalysisSection||'Manuscript'}</strong></div>
-        <div><span style="color:var(--ink-faint);">Edit ratio</span> <strong>${d.editRatio}%</strong></div>
-      </div>
-      <div style="margin-top:8px;font-size:0.65rem;color:var(--ink-faint);">Edit <code>bookprogress.config.json</code> and run <code>pnpm extract</code> to change.</div>
-    `;
-    panel.style.display = 'block';
-  } else {
-    panel.style.display = 'none';
-  }
 }
 
 function renderTabs() {
@@ -296,7 +251,7 @@ function buildOverview(d, days, totalWords, chapterWords, sectionGoal, pct, est,
       <div class="card">
         <h2>Where the words live</h2>
         <div class="section-grid">${Object.entries(d.perSection||{}).map(([name,info]) => `
-          <div class="section-cell" style="cursor:pointer;opacity:${activeSection==='all'||activeSection===name?1:0.5};" onclick="switchSection('${name}')">
+          <div class="section-cell">
             <div class="val">${fmt(info.words)}</div>
             <div class="pages">${pp(info.words)} pp</div>
             <div class="lbl">${name} &middot; ${info.files} files</div>
@@ -479,24 +434,6 @@ function toggleTheme() {
   document.body.classList.toggle('dark');
   document.querySelector('.theme-toggle').textContent = document.body.classList.contains('dark') ? 'light' : 'dark';
   renderTabs();
-}
-
-function switchSection(section) {
-  activeSection = activeSection === section ? 'all' : section;
-  renderTabs();
-}
-
-function share() {
-  const url = window.location.href;
-  if (navigator.share) {
-    navigator.share({ title: 'Writing Tracker', url });
-  } else {
-    navigator.clipboard.writeText(url).then(() => {
-      const btn = document.querySelector('.btn');
-      btn.textContent = 'copied';
-      setTimeout(() => btn.textContent = 'share this page', 2000);
-    });
-  }
 }
 
 refresh();
