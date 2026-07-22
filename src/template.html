@@ -233,12 +233,14 @@ function assignSectionColors() {
 function buildHTML() {
   const d = progress;
   const days = getFilteredDays();
-  const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0;
   const isAll = activeSection === 'all';
+  // When showing all, use manuscript chapter word counts for accurate current state
+  const chapterWords = isAll ? Object.values(d.chapterWordCounts || {}).reduce((a, b) => a + b, 0) : 0;
+  const totalWords = isAll ? (chapterWords || (days.length > 0 ? days[days.length - 1].totalWords : 0)) : (days.length > 0 ? days[days.length - 1].totalWords : 0);
   const goalTarget = isAll ? d.totalGoal : Math.round(d.totalGoal * (totalWords / (d.totalWords || 1)));
   const estFinish = d.estimatedFinish || {};
   const pct = goalTarget > 0 ? Math.round(totalWords / goalTarget * 100) : 0;
-  const dailyAvg = days.length > 0 ? Math.round(totalWords / days.length) : 0;
+  const dailyAvg = days.length > 0 ? Math.round(totalWords / Math.max((new Date(days[days.length-1].date) - new Date(days[0].date)) / 86400000 + 1, 1)) : 0;
 
   return `
   <!-- Hero -->
@@ -475,7 +477,7 @@ function buildFileDetail() {
     </div>
     <div class="stat-card has-tip ${metricColorInv(stats.ttr, t.ttr)}">
       <div class="stat-value">${Math.round(stats.ttr)}</div>
-      <div class="stat-label">TTR</div>
+      <div class="stat-label">Vocab range</div>
       ${tip('ttr', stats.ttr)}
     </div>
     <div class="stat-card">
@@ -641,7 +643,7 @@ function renderCumulativeChart() {
   const extCurrentPace = days.map((_, i) => paceBase * (i + 1)); // placeholder, recalc below
   
   // Current pace: average words/day so far
-  const dailyAvg = days.length > 0 ? totalWords / days.length : paceBase;
+  const dailyAvg = days.length > 0 ? totalWords / Math.max((new Date(days[days.length-1].date) - new Date(days[0].date)) / 86400000 + 1, 1) : paceBase;
   
   // Extend labels day by day from lastDate+1 to endDate
   const cursor = new Date(lastDate);
@@ -722,8 +724,8 @@ const CHART_TIPS = {
   },
   vocab: {
     title: 'Vocabulary Richness',
-    desc: 'TTR (blue) = unique words ÷ total words. Honoré R (green) = lexical density robust to text length. Top-100 word % (dashed yellow) = common word ratio.',
-    bench: 'Shakespeare TTR 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
+    desc: 'Vocab range (blue) = unique words ÷ total words. Honoré R (green) = lexical density. Top-100 word % (dashed yellow) = common word ratio.',
+    bench: 'Shakespeare 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
   },
   sentiment: {
     title: 'Sentiment Trend',
@@ -787,8 +789,8 @@ const METRIC_INFO = {
     bench: 'King recommends <5 · Bestsellers avg 8–12 · Purple prose 15+',
   },
   ttr: {
-    name: 'Type-Token Ratio',
-    desc: 'Vocabulary richness: unique words ÷ total words. Higher = more varied vocabulary. Sensitive to text length.',
+    name: 'Vocabulary Range',
+    desc: 'Unique words divided by total words. Higher means richer, less repetitive language. Sensitive to text length.',
     calc: 'Unique words ÷ total words × 100',
     bench: 'Shakespeare 85 · Joyce 70 · Hemingway 55 · Average fiction 45–50 · Simple prose 35',
   },
@@ -811,7 +813,7 @@ const METRIC_INFO = {
     bench: 'Tragedies −50 to −20 · Thrillers −10 to +10 · Comedies +20 to +50',
   },
   editRatio: {
-    name: 'Edit Ratio',
+    name: 'Rewriting',
     desc: 'Percentage of word changes that were modifications (not pure additions). High ratio = heavy editing/rewriting phase.',
     calc: 'Changed words ÷ total added words × 100',
     bench: 'First draft 0–10% · Revision 15–30% · Polish 5–10%',
@@ -863,7 +865,7 @@ function buildMetricStrip() {
     { key: 'dialogueRatio', label: 'Dialogue', value: lastStats.dialogueRatio, suffix: '%' },
     { key: 'passiveRatio', label: 'Passive /1000w', value: lastStats.passiveRatio, suffix: '' },
     { key: 'adverbRatio', label: 'Adverbs /1000w', value: lastStats.adverbRatio, suffix: '' },
-    { key: 'ttr', label: 'TTR', value: lastStats.ttr, suffix: '' },
+    { key: 'ttr', label: 'Vocab range', value: lastStats.ttr, suffix: '' },,
   ];
 
   const colorFn = (key, value) => key === 'ttr' ? metricColorInv(value, t[key]) : metricColor(value, t[key]);
@@ -878,7 +880,7 @@ function buildMetricStrip() {
     </div>`).join('')}
     <div class="stat-card has-tip" style="padding:10px 14px;">
       <div class="stat-value" style="font-size:1.25rem;">${Math.round(progress.editRatio)}%</div>
-      <div class="stat-label" style="font-size:0.7rem;">Edit Ratio</div>
+      <div class="stat-label" style="font-size:0.7rem;">Rewriting</div>
       ${tip('editRatio', progress.editRatio)}
     </div>
   </div>`;
@@ -1072,7 +1074,7 @@ function renderVocabChart() {
       labels: daysWithStats.map((d) => d.date),
       datasets: [
         {
-          label: 'TTR (x10)',
+          label: 'Vocab range (x10)',
           data: daysWithStats.map((d) => d.textStats.ttr),
           borderColor: '#58a6ff', tension: 0.3, yAxisID: 'y',
         },
@@ -1095,7 +1097,7 @@ function renderVocabChart() {
         x: { ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
         y: {
           type: 'linear', position: 'left',
-          title: { display: true, text: 'TTR', color: '#8b949e' },
+          title: { display: true, text: 'Vocab range', color: '#8b949e' },
           ticks: { color: '#8b949e' }, grid: { color: '#21262d' }, min: 0
         },
         y1: {
@@ -1209,7 +1211,7 @@ function toggleSettings() {
       </p>
       ${thRow('Adverbs /1000w', t.adverbRatio)}
       ${thRow('Passive /1000w', t.passiveRatio)}
-      ${thRow('TTR (vocabulary)', t.ttr)}
+      ${thRow('Vocab range', t.ttr)}
       ${thRow('LIX readability', t.lix)}
       ${thRow('Sentence Length', t.sentenceLengthAvg)}
       ${thRow('Dialogue Ratio', t.dialogueRatio)}

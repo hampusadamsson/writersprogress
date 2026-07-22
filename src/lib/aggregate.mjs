@@ -43,6 +43,7 @@
 
 import { getCommitHistory, getFileContent, getWordDiff } from './git.mjs'
 import { analyzeText } from './textstats.mjs'
+import { existsSync } from 'node:fs'
 
 /**
  * Aggregate git history into daily progress report
@@ -197,7 +198,6 @@ export async function buildReport(cwd, config) {
   // Chapter word counts (from most recent file stats across all days)
   const chapterWordCounts = {}
   const seenPaths = new Set()
-  // Walk days in reverse to get latest version of each file
   for (let i = days.length - 1; i >= 0; i--) {
     for (const f of days[i].files) {
       if (f.section !== config.textAnalysisSection || seenPaths.has(f.path) || f.deleted) continue
@@ -205,6 +205,14 @@ export async function buildReport(cwd, config) {
       if (f.textStats) {
         chapterWordCounts[f.path] = f.textStats.wordCount
       }
+    }
+  }
+
+  // Filter chapterWordCounts to only files that exist at HEAD
+  const { join } = await import('node:path')
+  for (const path of Object.keys(chapterWordCounts)) {
+    if (!existsSync(join(cwd, path))) {
+      delete chapterWordCounts[path]
     }
   }
 
@@ -339,8 +347,11 @@ function computeEstimate(days, totalWords, totalGoal, dailyGoal) {
 
   const remaining = totalGoal - totalWords
 
-  // Paced: all-time average (total words / days since start)
-  const allTimeAvg = totalWords / days.length
+  // Paced: total words / calendar days since first commit
+  const firstDate = new Date(days[0].date)
+  const lastDate = new Date(days[days.length - 1].date)
+  const calendarDays = Math.round((lastDate - firstDate) / 86400000) + 1
+  const allTimeAvg = totalWords / calendarDays
   const pacedDays = allTimeAvg > 0 ? Math.ceil(remaining / allTimeAvg) : null
 
   // On-track: if daily goal is hit every day from now
