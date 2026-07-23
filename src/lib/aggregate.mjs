@@ -92,21 +92,19 @@ export async function buildReport(cwd, config) {
       // Check if file was deleted (numstat shows 0 adds, >0 deletes = removed from repo)
       const isDeleted = file.added === 0 && file.deleted > 0
 
-      // Text analysis for manuscript files
+      // Text analysis for all markdown files
       let fileTextStats
-      if (section === config.textAnalysisSection) {
-        const cacheKey = `${commit.hash}:${resolvedPath}`
-        if (!fileAnalysisCache.has(cacheKey)) {
-          const content = await getFileContent(cwd, commit.hash, resolvedPath)
-          if (content) {
-            const stats = analyzeText(content)
-            fileAnalysisCache.set(cacheKey, { wordCount: stats.wordCount, textStats: stats })
-          }
+      const cacheKey = `${commit.hash}:${resolvedPath}`
+      if (!fileAnalysisCache.has(cacheKey)) {
+        const content = await getFileContent(cwd, commit.hash, resolvedPath)
+        if (content) {
+          const stats = analyzeText(content)
+          fileAnalysisCache.set(cacheKey, { wordCount: stats.wordCount, textStats: stats })
         }
-        const cached = fileAnalysisCache.get(cacheKey)
-        if (cached) {
-          fileTextStats = cached.textStats
-        }
+      }
+      const cached = fileAnalysisCache.get(cacheKey)
+      if (cached) {
+        fileTextStats = cached.textStats
       }
 
       day.files.push({
@@ -306,20 +304,20 @@ function getSection(path) {
 function computePerSection(days) {
   /** @type {Map<string, {words: number, files: Set<string>}>} */
   const sections = new Map()
-
-  for (const day of days) {
-    for (const file of day.files) {
+  // Walk days in reverse, first non-deleted occurrence of each file gives its word count
+  const seenFiles = new Set()
+  for (let i = days.length - 1; i >= 0; i--) {
+    for (const file of days[i].files) {
+      if (file.deleted || seenFiles.has(file.path)) continue
+      seenFiles.add(file.path)
       if (!sections.has(file.section)) {
         sections.set(file.section, { words: 0, files: new Set() })
       }
       const s = sections.get(file.section)
-      if (file.deleted) {
-        s.words -= file.wordsRemoved
-        s.files.delete(file.path)
-      } else {
-        s.words += file.wordsAdded - file.wordsRemoved
-        s.files.add(file.path)
-      }
+      // Use textStats.wordCount for actual content, fall back to wordsAdded
+      const wc = file.textStats?.wordCount || file.wordsAdded || 0
+      s.words += wc
+      s.files.add(file.path)
     }
   }
 

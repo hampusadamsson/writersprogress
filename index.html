@@ -78,6 +78,7 @@
   .grid-4 { grid-template-columns: repeat(4, 1fr); }
   .card {
     background: var(--surface); border: 1px solid var(--line); padding: 14px;
+    overflow: hidden;
   }
   .card .val {
     font-family: 'IBM Plex Mono', monospace; font-size: 1.4rem; font-weight: 500;
@@ -94,13 +95,13 @@
   .section-cell .pages { font-size: 0.7rem; color: var(--accent); }
   .section-cell .lbl { font-size: 0.6rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
 
-  .metric-line { position: relative; height: 36px; margin: 12px 0 20px; }
+  .metric-line { position: relative; height: 52px; margin: 10px 0 18px; }
   .metric-line .track { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
   .metric-line .fill { position: absolute; left: 0; top: 50%; height: 1px; background: var(--ink); }
   .metric-line .marker { position: absolute; top: 50%; margin-left: -4px; margin-top: -5px; width: 8px; height: 10px; background: var(--ink); }
   .metric-line .mark-label { position: absolute; top: 50%; margin-top: -18px; font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink); transform: translateX(-50%); }
   .metric-line .ref { position: absolute; top: 50%; margin-top: -6px; width: 1px; height: 12px; background: var(--ink-faint); }
-  .metric-line .ref-label { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 0.5rem; color: var(--accent); white-space: nowrap; }
+  .metric-line .ref-label { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 0.45rem; color: var(--accent); white-space: nowrap; line-height:1.3; }
 
   .chapter-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
   .chapter-item { background: var(--paper); padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; }
@@ -180,18 +181,27 @@ function refresh() {
   try {
     if (typeof __PROGRESS_JSON__ === 'undefined') throw new Error('No data. Run: pnpm extract');
     progress = __PROGRESS_JSON__;
+    // Read tab from hash
+    const hash = window.location.hash.replace('#','');
+    if (['overview','style','chapters','habits'].includes(hash)) activeTab = hash;
     renderTabs();
-    switchTab('overview');
+    switchTab(activeTab);
   } catch (err) {
     document.getElementById('app').innerHTML = `<div style="color:var(--red);font-style:italic;padding:40px 0;">${err.message}</div>`;
   }
 }
+
+window.addEventListener('hashchange', () => {
+  const hash = window.location.hash.replace('#','');
+  if (['overview','style','chapters','habits'].includes(hash)) switchTab(hash);
+});
 
 const fmt = n => n.toLocaleString();
 const pp = w => Math.round(w / (progress.wordsPerPage || 300));
 
 function switchTab(tab) {
   activeTab = tab;
+  window.location.hash = tab;
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.toLowerCase().startsWith(tab)));
   document.getElementById('config-panel').style.display = 'none';
   renderTabs();
@@ -321,17 +331,17 @@ function buildStyle(d, stats, t, dailyAvg) {
   if (!stats) return '<div class="card"><div style="color:var(--ink-faint);font-style:italic;">No manuscript data yet</div></div>';
 
   const metrics = [
-    { label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: 'w', domain: [0,45], marks: [{v:10,n:'Hemingway'},{v:12,n:'Rowling'},{v:17,n:'Avg fiction'},{v:40,n:'Faulkner'}] },
-    { label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20,65], marks: [{v:25,n:'Potter'},{v:30,n:'Da Vinci'},{v:45,n:'News'},{v:55,n:'Academic'}] },
-    { label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0,100], marks: [{v:30,n:'Tolkien'},{v:40,n:'Rowling'},{v:60,n:'Hemingway'}] },
-    { label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0,12], marks: [{v:2,n:'Good fiction'},{v:4,n:'News'},{v:10,n:'Academic'}] },
-    { label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '', domain: [0,18], marks: [{v:5,n:'King'},{v:10,n:'Bestsellers'},{v:15,n:'Purple'}] },
-    { label: 'Vocab range', value: Math.round(stats.ttr), unit: '', domain: [30,90], marks: [{v:35,n:'Simple'},{v:47,n:'Avg fiction'},{v:55,n:'Hemingway'},{v:70,n:'Joyce'},{v:85,n:'Shakespeare'}] },
-    { label: 'Rewriting', value: d.editRatio, unit: '%', domain: [0,35], marks: [{v:5,n:'Draft'},{v:20,n:'Revision'},{v:30,n:'Polish'}] },
-    { label: 'Daily writing', value: dailyAvg, unit: 'w', domain: [0,2800], marks: [{v:300,n:'Nabokov'},{v:500,n:'Hemingway'},{v:1000,n:'Rowling'},{v:2000,n:'King'},{v:2500,n:'Sanderson'}] },
+    { label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: 'w', domain: [0,45], marks: [{v:10,n:'Hemingway'},{v:15,n:'King'},{v:22,n:'Austen'},{v:38,n:'Faulkner'}] },
+    { label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20,65], marks: [{v:25,n:'Potter'},{v:30,n:'Da Vinci'},{v:45,n:'NYT'},{v:58,n:'Academic'}] },
+    { label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0,100], marks: [{v:15,n:'McCarthy'},{v:30,n:'Tolkien'},{v:40,n:'Rowling'},{v:60,n:'Hemingway'}] },
+    { label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0,5], marks: [{v:1,n:'Hemingway'},{v:2,n:'Rowling'},{v:4,n:'NYT'},{v:5,n:'Academic'}] },
+    { label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '', domain: [0,18], marks: [{v:2,n:'McCarthy'},{v:5,n:'King'},{v:10,n:'Rowling'},{v:15,n:'E.L. James'}] },
+    { label: 'Vocab range', value: Math.round(stats.ttr), unit: '', domain: [30,90], marks: [{v:35,n:'Simple'},{v:44,n:'Avg fiction'},{v:55,n:'Hemingway'},{v:70,n:'Joyce'}] },
+    { label: 'Rewriting', value: d.editRatio, unit: '%', domain: [0,35], marks: [{v:5,n:'Draft'},{v:12,n:'Revision'},{v:20,n:'Edit'},{v:30,n:'Polish'}] },
+    { label: 'Daily writing', value: dailyAvg, unit: 'w', domain: [0,2800], marks: [{v:500,n:'Hemingway'},{v:1000,n:'Rowling'},{v:2000,n:'King'},{v:2500,n:'Sanderson'}] },
   ];
 
-  const offsets = ['-16px','-28px','10px','22px'];
+  const offsets = ['-20px','-34px','14px','28px','-8px','20px'];
 
   return `
     <div class="grid">
@@ -343,7 +353,13 @@ function buildStyle(d, stats, t, dailyAvg) {
     </div>
 
     <div class="grid" style="margin-top:12px;">
-      <div class="card full"><h2>Style over time</h2><div class="chart-wrap"><canvas id="styleChart"></canvas></div></div>
+      <div class="card full"><h2>Style over time</h2><div class="chart-wrap"><canvas id="styleChart"></canvas></div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:0.65rem;color:var(--ink-faint);margin-top:6px;font-family:'IBM Plex Mono',monospace;">
+          <span>&mdash; Sentence length</span>
+          <span style="color:var(--accent);">- - LIX readability</span>
+          <span style="color:var(--green);">&mdash; Dialogue %</span>
+        </div>
+      </div>
     </div>
 
     <div class="grid" style="margin-top:12px;">
@@ -358,8 +374,8 @@ function buildStyle(d, stats, t, dailyAvg) {
             <div class="mark-label" style="left:${mpct}%">${m.value}${m.unit}</div>
             ${m.marks.map((mk,mi) => {
               const rpct = (mk.v - m.domain[0])/(m.domain[1] - m.domain[0])*100;
-              const top = offsets[mi % offsets.length];
-              return `<div class="ref" style="left:${rpct}%"></div><div class="ref-label" style="left:${rpct}%;top:${top};">${mk.n} ${mk.v}${m.unit}</div>`;
+              const top = '31px';
+              return `<div class="ref" style="left:${rpct}%"></div><div class="ref-label" style="left:${rpct}%;top:31px;text-align:center;"><span style="display:block;">${mk.n}</span><span style="display:block;font-size:0.4rem;">${mk.v}${m.unit}</span></div>`;
             }).join('')}
           </div>
         </div>`;

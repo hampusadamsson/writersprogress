@@ -555,26 +555,26 @@ function buildStyle(d, stats, t, dailyAvg) {
 
   const metrics = [
     { key: 'sentenceLengthAvg', label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: 'w', domain: [0, 45],
-      marks: [{ v: 10, n: 'Hemingway' }, { v: 12, n: 'Rowling' }, { v: 17, n: 'Avg fiction' }, { v: 40, n: 'Faulkner' }],
-      note: m => `My sentences average <em>${m.value}${m.unit}</em>. Hemingway wrote at 10. Rowling at 12. Faulkner stretched past 40. Short sentences create urgency. Long ones build atmosphere.` },
+      marks: [{ v: 10, n: 'Hemingway' }, { v: 15, n: 'King' }, { v: 22, n: 'Austen' }, { v: 38, n: 'Faulkner' }],
+      note: m => `My sentences average <em>${m.value}${m.unit}</em>. Hemingway at 10, King at 15, Austen at 22, Faulkner at 38. Short sentences create urgency. Long ones build atmosphere.` },
     { key: 'lix', label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20, 65],
-      marks: [{ v: 25, n: 'Harry Potter' }, { v: 30, n: 'Da Vinci Code' }, { v: 45, n: 'Newspapers' }, { v: 55, n: 'Academic' }],
-      note: m => `My LIX is <em>${m.value}</em>. Potter scores 25, newspapers 45, academic texts 55. LIX measures readability: lower means easier to read, higher means more complex sentences and longer words.` },
+      marks: [{ v: 25, n: 'Potter' }, { v: 30, n: 'Da Vinci' }, { v: 45, n: 'NYT' }, { v: 58, n: 'Academic' }],
+      note: m => `My LIX is <em>${m.value}</em>. Potter at 25, Da Vinci at 30, NYT at 45, Academic at 58. LIX measures readability: lower means easier to read, higher means complex sentences.` },
     { key: 'dialogueRatio', label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0, 100],
-      marks: [{ v: 30, n: 'Tolkien' }, { v: 40, n: 'Rowling' }, { v: 60, n: 'Hemingway' }],
-      note: m => `<em>${m.value}%</em> of my lines are dialogue. Tolkien sat at 30%, Rowling 40%, Hemingway 60%. Dialogue-heavy scenes move faster. Low dialogue means more narration and description.` },
-    { key: 'passiveRatio', label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0, 12],
-      marks: [{ v: 2, n: 'Good fiction' }, { v: 4, n: 'News' }, { v: 10, n: 'Academic' }],
-      note: m => `<em>${m.value}</em> passives per 1000 words. Good fiction stays under 2. News runs 3 to 5. Academic texts hit 10. Passive voice obscures who acts. Active voice is direct and clear.` },
+      marks: [{ v: 15, n: 'McCarthy' }, { v: 30, n: 'Tolkien' }, { v: 40, n: 'Rowling' }, { v: 60, n: 'Hemingway' }],
+      note: m => `<em>${m.value}%</em> of my lines are dialogue. McCarthy at 15%, Tolkien 30%, Rowling 40%, Hemingway 60%. Dialogue-heavy scenes move faster. Low dialogue means more narration.` },
+    { key: 'passiveRatio', label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0, 5],
+      marks: [{ v: 1, n: 'Hemingway' }, { v: 2, n: 'Rowling' }, { v: 4, n: 'NYT' }, { v: 5, n: 'Academic' }],
+      note: m => `<em>${m.value}</em> passives per 1000 words. Hemingway at 1, Rowling at 2, NYT at 4, Academic at 5. Passive voice obscures who acts. Active voice is direct and clear.` },
     { key: 'adverbRatio', label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '', domain: [0, 18],
-      marks: [{ v: 5, n: 'King' }, { v: 10, n: 'Bestsellers' }, { v: 15, n: 'Purple prose' }],
-      note: m => `<em>${m.value}</em> adverbs per 1000 words. King keeps under 5. Bestsellers average 10. Purple prose hits 15. Adverbs prop up weak verbs. A strong verb needs no modifier.` },
-    { key: 'ttr', label: 'Vocabulary range', value: Math.round(stats.ttr), unit: '', domain: [30, 90],
-      marks: [{ v: 35, n: 'Simple prose' }, { v: 47, n: 'Avg fiction' }, { v: 55, n: 'Hemingway' }, { v: 70, n: 'Joyce' }, { v: 85, n: 'Shakespeare' }],
-      note: m => `My range is <em>${m.value}</em>. Simple prose sits at 35, average fiction at 47, Hemingway at 55, Joyce at 70, Shakespeare at 85. Measures how many unique words I use. Higher means less repetition.` },
+      marks: [{ v: 2, n: 'McCarthy' }, { v: 5, n: 'King' }, { v: 10, n: 'Rowling' }, { v: 15, n: 'E.L. James' }],
+      note: m => `<em>${m.value}</em> adverbs per 1000 words. McCarthy at 2, King at 5, Rowling at 10, E.L. James at 15. Adverbs prop up weak verbs. A strong verb needs no modifier.` },
+    { key: 'ttr', label: 'Vocab range', value: Math.round(stats.ttr), unit: '', domain: [30, 90],
+      marks: [{ v: 35, n: 'Simple' }, { v: 44, n: 'Avg fiction' }, { v: 55, n: 'Hemingway' }, { v: 70, n: 'Joyce' }],
+      note: m => `My range is <em>${m.value}</em>. Simple prose at 35, average fiction at 44, Hemingway at 55, Joyce at 70. Higher means less repetition, richer vocabulary.` },
     { key: 'editRatio', label: 'Rewriting', value: d.editRatio, unit: '%', domain: [0, 35],
-      marks: [{ v: 5, n: 'First draft' }, { v: 20, n: 'Revision' }, { v: 30, n: 'Polish' }],
-      note: m => `<em>${m.value}%</em> of my word count is rewriting. First drafts stay under 5%. Revision runs 15 to 30%. Polish drops below 10%. High means heavy editing. Low means fresh drafting.` },
+      marks: [{ v: 5, n: 'Draft' }, { v: 12, n: 'Revision' }, { v: 20, n: 'Edit' }, { v: 30, n: 'Polish' }],
+      note: m => `<em>${m.value}%</em> of my word count is rewriting. Draft at 5%, Revision at 12%, Edit at 20%, Polish at 30%. High means heavy editing. Low means fresh drafting.` },
   ];
 
   const chapters = ['IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -582,9 +582,9 @@ function buildStyle(d, stats, t, dailyAvg) {
   // Add daily writing metric
   if (progress.days.length > 0) {
     metrics.push({
-      key: 'dailyWriting', label: 'Daily writing', value: dailyAvg, unit: ' words', domain: [0, 2800],
-      marks: [{ v: 300, n: 'Nabokov' }, { v: 500, n: 'Hemingway' }, { v: 1000, n: 'Rowling' }, { v: 1000, n: 'Trollope' }, { v: 2000, n: 'King' }, { v: 2500, n: 'Sanderson' }],
-      note: m => `I write <em>${m.value}</em> words per day on average. Nabokov wrote 300, Hemingway 500, Rowling 1000, Trollope 1000, King 2000, Sanderson 2500. Pace is personal. Showing up is what counts.`,
+      key: 'dailyWriting', label: 'Daily writing', value: dailyAvg, unit: 'w', domain: [0, 2800],
+      marks: [{ v: 500, n: 'Hemingway' }, { v: 1000, n: 'Rowling' }, { v: 2000, n: 'King' }, { v: 2500, n: 'Sanderson' }],
+      note: m => `I write <em>${m.value}</em> words per day. Hemingway at 500, Rowling at 1000, King at 2000, Sanderson at 2500. Pace is personal. Showing up is what counts.`,
     });
   }
 
@@ -607,7 +607,7 @@ function buildStyle(d, stats, t, dailyAvg) {
               const mpct = (mk.v - m.domain[0]) / (m.domain[1] - m.domain[0]) * 100;
               const offsets = ['-20px', '-32px', '28px', '40px'];
               const top = offsets[mi % offsets.length];
-              return '<div style="position:absolute;left:' + mpct + '%;top:50%;margin-top:-10px;width:1px;height:20px;background:var(--ink-faint);"><span style="position:absolute;top:' + top + ';left:3px;font-family:IBM Plex Mono,monospace;font-size:0.5rem;color:var(--accent);white-space:nowrap;">' + mk.n + ' ' + mk.v + m.unit + '</span></div>';
+              return '<div style="position:absolute;left:' + mpct + '%;top:50%;margin-top:-10px;width:1px;height:20px;background:var(--ink-faint);"><span style="position:absolute;top:' + top + ';left:3px;font-family:IBM Plex Mono,monospace;font-size:0.5rem;color:var(--accent);white-space:nowrap;text-align:center;"><span style="display:block;">' + mk.n + '</span><span style="display:block;font-size:0.4rem;">' + mk.v + m.unit + '</span></span></div>';
             }).join('')}
           </div>
         </div>
