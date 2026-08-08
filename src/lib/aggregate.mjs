@@ -264,7 +264,9 @@ export async function buildReport(cwd, config) {
  * Matches exact path or any path under the section folder.
  */
 function isInAnalysisSection(path, config) {
-  if (!config.textAnalysisSection || !path.endsWith('.md')) return false
+  if (!config.textAnalysisSection) return false
+  const ext = config.fileExtension || '.md'
+  if (!path.endsWith(ext)) return false
   const section = config.textAnalysisSection.replace(/\/+$/, '')
   return path === section || path.startsWith(`${section}/`)
 }

@@ -575,7 +575,7 @@ function buildChapters(d) {
               <button type="button" onclick="chapterPage=Math.min(${totalPages-1},chapterPage+1);render()" ${page===totalPages-1?'disabled':''}>next →</button>
             </div>` : '';
   const chapterRow = (path, wc) => {
-    const name = path.split('/').pop().replace('.md','');
+    const name = path.split('/').pop().replace(/\.[^.]+$/,'');
     const cpct = Math.min(Math.round(wc / target * 100), 100);
     const s = stats[path] || {};
     const details = expandedChapters.has(path) ? `

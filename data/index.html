@@ -402,7 +402,7 @@ function buildChapters(d, wpp) {
       <div class="card full"><h2>Chapter word counts</h2>
         <div class="chapter-list">
           ${slice.map(([path, wc]) => {
-            const name = path.split('/').pop().replace('.md','');
+            const name = path.split('/').pop().replace(/\.[^.]+$/,'');
             const cpct = Math.min(Math.round(wc/target*100),100);
             const s = stats[path] || {};
             const details = `

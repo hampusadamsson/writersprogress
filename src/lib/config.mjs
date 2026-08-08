@@ -6,6 +6,7 @@ const DEFAULTS = {
   totalWordGoal: 80_000,
   chapterTargetWords: 2_500,
   textAnalysisSection: 'Manuscript',
+  fileExtension: '.md',
   language: null, // 'swedish' | 'english' | null (auto-detect)
   wordsPerPage: 300,
   authorName: 'Hampus Adamsson',
