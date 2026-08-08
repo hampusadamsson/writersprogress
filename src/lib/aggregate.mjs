@@ -40,10 +40,10 @@
  * @property {number} editRatio
  */
 
-import { existsSync } from 'node:fs'
-import { join } from 'node:path'
 import { getCommitHistory, getFileContent, getWordDiff } from './git.mjs'
 import { analyzeText, detectLanguage } from './textstats.mjs'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 
 /**
  * Aggregate git history into daily progress report
@@ -65,6 +65,9 @@ export async function buildReport(cwd, config) {
 
   let lang = config.language || null
 
+  /** @type {Map<string, string>} */
+  const renameMap = new Map() // old path → new path
+
   for (const commit of commits) {
     const dateKey = commit.date.slice(0, 10)
     const hour = Number(commit.date.slice(11, 13))
@@ -85,8 +88,23 @@ export async function buildReport(cwd, config) {
     const day = dayMap.get(dateKey)
 
     for (const file of commit.files) {
+      // Detect renames from {old => new} format
+      let isRename = false
+      let oldRenamePath = null
+      if (file.path.includes('{') && file.path.includes('=>')) {
+        const braceMatch = file.path.match(/\{([^{}=]+)\s*=>\s*([^}]+)\}/)
+        if (braceMatch) {
+          const prefix = file.path.slice(0, file.path.indexOf('{'))
+          oldRenamePath = prefix + braceMatch[1].trim()
+          const newPath = prefix + braceMatch[2].trim()
+          renameMap.set(oldRenamePath, newPath)
+          isRename = true
+        }
+      }
       const resolvedPath = resolveRenamePath(file.path)
-      if (!isInAnalysisSection(resolvedPath, config)) continue
+      // For renames, store under old path so it merges with existing entries
+      const storagePath = isRename ? oldRenamePath : resolvedPath
+      if (!isInAnalysisSection(storagePath, config)) continue
 
       const wordDiff = await getWordDiff(cwd, commit.hash, commit.parent, resolvedPath)
       // Check if file was deleted (numstat shows 0 adds, >0 deletes = removed from repo)
@@ -104,7 +122,7 @@ export async function buildReport(cwd, config) {
       const fileTextStats = fileAnalysisCache.get(cacheKey)
 
       day.files.push({
-        path: resolvedPath,
+        path: storagePath,
         wordsAdded: wordDiff.added,
         wordsRemoved: wordDiff.removed,
         deleted: isDeleted,
@@ -190,24 +208,30 @@ export async function buildReport(cwd, config) {
   const chapterStats = {}
   const seenPaths = new Set()
   for (let i = days.length - 1; i >= 0; i--) {
-    for (const f of days[i].files) {
-      if (seenPaths.has(f.path) || f.deleted) continue
-      seenPaths.add(f.path)
+    // Process files in reverse within day so latest commit wins
+    for (let j = days[i].files.length - 1; j >= 0; j--) {
+      const f = days[i].files[j]
+      // Resolve renames to final path
+      let resolvedPath = f.path
+      while (renameMap.has(resolvedPath)) resolvedPath = renameMap.get(resolvedPath)
+      if (seenPaths.has(resolvedPath) || f.deleted) continue
+      seenPaths.add(resolvedPath)
       if (f.textStats) {
-        chapterWordCounts[f.path] = f.textStats.wordCount
-        chapterStats[f.path] = f.textStats
+        chapterWordCounts[resolvedPath] = f.textStats.wordCount
+        chapterStats[resolvedPath] = f.textStats
       }
     }
   }
 
-  // Filter chapterWordCounts to only files that exist at HEAD
+  // Filter chapterWordCounts to only files that exist at HEAD (with rename resolution)
   for (const path of Object.keys(chapterWordCounts)) {
-    if (!existsSync(join(cwd, path))) {
+    let checkPath = path
+    while (renameMap.has(checkPath)) checkPath = renameMap.get(checkPath)
+    if (!existsSync(join(cwd, checkPath))) {
       delete chapterWordCounts[path]
+      delete chapterStats[path]
     }
   }
-
-  // Overall edit ratio
   let totalAdded = 0
   let totalChanged = 0
   for (const day of days) {
@@ -275,8 +299,12 @@ function isInAnalysisSection(path, config) {
  * Handle rename paths: "old => new" → returns new path
  */
 function resolveRenamePath(path) {
-  const match = path.match(/=>\s*(.+)/)
-  return match ? match[1].replace(/^"|"$/g, '') : path
+  // Handle "{old => new}" format (git --find-renames)
+  const brace = path.match(/\{(.+)\s*=>\s*(.+)\}/)
+  if (brace) return path.replace(/\{[^}]+\}/, brace[2])
+  // Handle "old => new" format (legacy)
+  const arrow = path.match(/=>\s*(.+)/)
+  return arrow ? arrow[1].replace(/^"|"$/g, '') : path
 }
 
 /**

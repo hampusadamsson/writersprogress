@@ -5,7 +5,7 @@ import { loadConfig } from './lib/config.mjs'
 describe('config', () => {
   it('loads and applies defaults', async () => {
     const config = await loadConfig('bookprogress.config.json')
-    assert.ok(config.bookFolder.endsWith('Ruindykarna'))
+    assert.ok(config.bookFolder.endsWith('KingAndQueen'))
     assert.strictEqual(config.dailyWordGoal, 500)
     assert.strictEqual(config.totalWordGoal, 80_000)
     assert.strictEqual(config.textAnalysisSection, '04 - Manuscript')

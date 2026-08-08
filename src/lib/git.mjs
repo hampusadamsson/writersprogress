@@ -25,7 +25,7 @@ export async function getCommitHistory(cwd) {
   const git = simpleGit(cwd)
 
   // Parse --numstat output: "added\ttab\tfilepath"
-  const log = await git.raw(['log', '--format=%H|%aI|%s', '--numstat', '--all', '--reverse'])
+  const log = await git.raw(['log', '--format=%H|%aI|%s', '--numstat', '--find-renames', '--all', '--reverse'])
 
   return parseNumstatLog(log)
 }
