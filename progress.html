@@ -76,6 +76,7 @@
   .visible .chapter-num { opacity: 1; transform: translateY(0); }
 
   h2 {
+    font-family: 'Crimson Text', 'Georgia', 'Times New Roman', serif;
     font-size: 2.2rem;
     font-weight: 400;
     line-height: 1.2;
@@ -90,7 +91,7 @@
   h2 em { font-style: italic; color: var(--accent); }
   h1 em { font-style: italic; color: var(--accent); }
   em { font-style: italic; color: var(--accent); }
-  h2 strong { font-weight: 700; }
+  h2 strong { font-weight: 400; }
 
   .sub {
     font-size: 1rem;
@@ -164,36 +165,6 @@
     color: var(--ink-light);
   }
 
-  .section-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1px;
-    background: var(--line);
-    border: 1px solid var(--line);
-    margin-bottom: 36px;
-  }
-  .section-cell {
-    background: var(--paper);
-    padding: 20px 16px;
-  }
-  .section-cell .val {
-    font-family: 'IBM Plex Mono', 'Courier New', monospace;
-    font-size: 1.2rem;
-    font-weight: 500;
-    color: var(--ink);
-  }
-  .section-cell .pages {
-    font-size: 0.8rem;
-    color: var(--accent);
-    margin-top: 2px;
-  }
-  .section-cell .lbl {
-    font-size: 0.7rem;
-    color: var(--ink-light);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-top: 4px;
-  }
 
   .chapter-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
   .chapter-item {
@@ -232,6 +203,31 @@
     min-width: 75px;
     text-align: right;
   }
+  .chapter-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: var(--paper); border-left: 2px solid var(--accent); font-size: 0.7rem; }
+  .detail-item { display: flex; flex-direction: column; }
+  .detail-val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .detail-lbl { color: var(--ink-faint); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .card-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 8px; margin-bottom: 12px; }
+  .card-cell { background: var(--paper); padding: 14px 8px; text-align: center; position: relative; }
+  .card-cell .val { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 500; position: relative; }
+  .card-cell .pages { font-size: 0.65rem; color: var(--ink); margin-top: 2px; position: relative; }
+
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; }
+  .pagination button { background: none; border: 1px solid var(--line); color: var(--ink-faint); padding: 4px 12px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; }
+  .pagination button:hover { border-color: var(--accent); color: var(--accent); }
+  .pagination button:disabled { opacity: 0.3; cursor: default; }
+
+  .metric-line { position: relative; height: 52px; margin: 10px 0 18px; }
+
+  .card { background: var(--paper); padding: 16px; border: 1px solid var(--line); margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .metric-line .track { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
+  .metric-line .fill { position: absolute; left: 0; top: 50%; height: 1px; background: var(--ink); }
+  .metric-line .marker { position: absolute; top: 50%; margin-left: -4px; margin-top: -5px; width: 8px; height: 10px; background: var(--ink); }
+  .metric-line .mark-label { position: absolute; top: 50%; margin-top: -18px; font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink); transform: translateX(-50%); }
+  .metric-line .ref { position: absolute; top: 50%; margin-top: -6px; width: 1px; height: 12px; background: var(--ink-faint); }
+  .metric-line .ref-label { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 0.45rem; color: var(--accent); white-space: nowrap; line-height:1.3; }
 
   .chip-row { display: flex; gap: 6px; flex-wrap: wrap; }
   .chip {
@@ -357,6 +353,7 @@
     .big-number { font-size: 2.8rem; }
     h2 { font-size: 1.6rem; }
     .scroll-progress { display: none; }
+    .metric-line { height: 44px; margin: 14px 0 24px; }
     body { background-size: 100% 24px; }
   }
 </style>
@@ -364,7 +361,7 @@
 <body>
 
 <div class="scroll-progress"><div class="thumb" id="scroll-thumb"></div></div>
-<button class="theme-toggle" onclick="toggleTheme()">dark</button>
+<button type="button" class="theme-toggle" onclick="toggleTheme()">dark</button>
 <div id="app"><div style="text-align:center;padding:80px 0;color:var(--ink-faint);font-style:italic;">Loading...</div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
@@ -372,6 +369,14 @@
 // __PROGRESS_JSON__
 
 let progress = null;
+let expandedChapters = new Set();
+let chapterPage = 0;
+
+function toggleChapter(path) {
+  if (expandedChapters.has(path)) expandedChapters.delete(path);
+  else expandedChapters.add(path);
+  render();
+}
 
 function toggleTheme() {
   const btn = document.querySelector('.theme-toggle');
@@ -418,45 +423,6 @@ const getLatestStats = () => {
   }
   return null;
 };
-
-function maxSection(sections) {
-  const entries = Object.entries(sections);
-  if (!entries.length) return '--';
-  return entries.reduce((a, b) => a[1].words > b[1].words ? a : b)[0];
-}
-function minSection(sections) {
-  const entries = Object.entries(sections);
-  if (!entries.length) return '--';
-  return entries.reduce((a, b) => a[1].words < b[1].words ? a : b)[0];
-}
-function peakHour(hours) {
-  if (!hours || !Object.keys(hours).length) return '--';
-  return Object.entries(hours).reduce((a, b) => a[1] > b[1] ? a : b)[0];
-}
-function totalCommitDays(hours) {
-  if (!hours) return 0;
-  return Object.values(hours).reduce((a, b) => a + b, 0);
-}
-
-function metricColor(key, value, t) {
-  if (!t || !t[key]) return '';
-  const m = t[key];
-  if (m.goodMin !== undefined) {
-    if (value >= m.goodMin && value <= m.goodMax) return 'good';
-    if (value >= m.warnMin && value <= m.warnMax) return 'warn';
-    return 'bad';
-  }
-  if (value <= m.good) return 'good';
-  if (value <= m.warn) return 'warn';
-  return 'bad';
-}
-function metricColorInv(key, value, t) {
-  if (!t || !t[key]) return '';
-  const m = t[key];
-  if (value >= m.good) return 'good';
-  if (value >= m.warn) return 'warn';
-  return 'bad';
-}
 
 function buildHero(d, days, totalWords, est, sectionGoal, dailyAvg) {
   const author = d.authorName || 'I';
@@ -517,30 +483,6 @@ function buildSessions(dailyAvg) {
     </section>`;
 }
 
-function buildSections(d, totalWords) {
-  const sections = d.perSection || {};
-  return `
-    <section>
-      <div class="container fade">
-        <div class="chapter-num">Chapter III</div>
-        <h2><em>Where</em> the words <strong>live</strong></h2>
-        <div class="sub">${Object.keys(sections).length} sections across my manuscript</div>
-        <div class="reveal reveal-d1">
-          <div class="section-grid">
-            ${Object.entries(sections).map(([name, info]) => `
-              <div class="section-cell">
-                <div class="val">${fmt(info.words)}</div>
-                <div class="pages">${pp(info.words)} pp.</div>
-                <div class="lbl">${name} &middot; ${info.files} files</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <p class="note">${Object.keys(sections).length} sections hold ${fmt(totalWords)} words. The largest is ${maxSection(sections)}. ${minSection(sections)} is still growing.</p>
-      </div>
-    </section>`;
-}
-
 function buildStyle(d, stats, t, dailyAvg) {
   if (!stats) {
     return `
@@ -572,6 +514,9 @@ function buildStyle(d, stats, t, dailyAvg) {
     { key: 'ttr', label: 'Vocab range', value: Math.round(stats.ttr), unit: '', domain: [30, 90],
       marks: [{ v: 35, n: 'Simple' }, { v: 44, n: 'Avg fiction' }, { v: 55, n: 'Hemingway' }, { v: 70, n: 'Joyce' }],
       note: m => `My range is <em>${m.value}</em>. Simple prose at 35, average fiction at 44, Hemingway at 55, Joyce at 70. Higher means less repetition, richer vocabulary.` },
+    { key: 'sentimentPolarity', label: 'Sentiment', value: Math.round(stats.sentimentPolarity), unit: '', domain: [-100, 100],
+      marks: [{ v: -40, n: 'Tragedies' }, { v: -10, n: 'Noir' }, { v: 10, n: 'Dramas' }, { v: 30, n: 'Comedies' }],
+      note: m => `My sentiment score is <em>${m.value}</em>. Tragedies at −40, Noir at −10, Dramas at +10, Comedies at +30. Negative is darker, positive is lighter.` },
     { key: 'editRatio', label: 'Rewriting', value: d.editRatio, unit: '%', domain: [0, 35],
       marks: [{ v: 5, n: 'Draft' }, { v: 12, n: 'Revision' }, { v: 20, n: 'Edit' }, { v: 30, n: 'Polish' }],
       note: m => `<em>${m.value}%</em> of my word count is rewriting. Draft at 5%, Revision at 12%, Edit at 20%, Polish at 30%. High means heavy editing. Low means fresh drafting.` },
@@ -588,7 +533,7 @@ function buildStyle(d, stats, t, dailyAvg) {
     });
   }
 
-  const metricChapters = ['V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+  const metricChapters = ['V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII'];
 
   return metrics.map((m, i) => {
     const pct = Math.min((m.value - m.domain[0]) / (m.domain[1] - m.domain[0]) * 100, 100);
@@ -597,20 +542,16 @@ function buildStyle(d, stats, t, dailyAvg) {
       <div class="container fade">
         <div class="chapter-num">Chapter ${metricChapters[i]}</div>
         <h2><em>${m.label}</em></h2>
-        <div class="reveal reveal-d1" style="margin-top:16px;">
-          <div style="position:relative;height:48px;margin-bottom:8px;">
-            <div style="position:absolute;left:0;right:0;top:50%;height:2px;background:var(--line);"></div>
-            <div style="position:absolute;left:0;top:50%;height:2px;background:var(--ink);width:${pct}%;transition:width 1.2s var(--transition-ease);"></div>
-            <div style="position:absolute;left:${pct}%;top:50%;margin-left:-6px;margin-top:-7px;width:12px;height:14px;background:var(--ink);border-radius:2px;"></div>
-            <span style="position:absolute;left:${pct}%;top:50%;margin-top:-28px;margin-left:-2px;font-family:IBM Plex Mono,monospace;font-size:0.8rem;color:var(--ink);white-space:nowrap;transform:translateX(-50%);font-weight:500;">${m.value}${m.unit}</span>
-            ${m.marks.map((mk, mi) => {
-              const mpct = (mk.v - m.domain[0]) / (m.domain[1] - m.domain[0]) * 100;
-              const offsets = ['-20px', '-32px', '28px', '40px'];
-              const top = offsets[mi % offsets.length];
-              return '<div style="position:absolute;left:' + mpct + '%;top:50%;margin-top:-10px;width:1px;height:20px;background:var(--ink-faint);"><span style="position:absolute;top:' + top + ';left:3px;font-family:IBM Plex Mono,monospace;font-size:0.5rem;color:var(--accent);white-space:nowrap;text-align:center;"><span style="display:block;">' + mk.n + '</span><span style="display:block;font-size:0.4rem;">' + mk.v + m.unit + '</span></span></div>';
+        <div class="metric-line">
+            <div class="track"></div>
+            <div class="fill" style="width:${pct}%"></div>
+            <div class="marker" style="left:${pct}%"></div>
+            <div class="mark-label" style="left:${pct}%">${m.value}${m.unit}</div>
+            ${m.marks.map(mk => {
+              const rpct = (mk.v - m.domain[0])/(m.domain[1] - m.domain[0])*100;
+              return `<div class="ref" style="left:${rpct}%"></div><div class="ref-label" style="left:${rpct}%;top:31px;text-align:center;"><span style="display:block;">${mk.n}</span><span style="display:block;font-size:0.4rem;">${mk.v}${m.unit}</span></div>`;
             }).join('')}
           </div>
-        </div>
         <p class="note">${m.note(m)}</p>
       </div>
     </section>`;
@@ -619,15 +560,42 @@ function buildStyle(d, stats, t, dailyAvg) {
 
 function buildChapters(d) {
   const chapters = d.chapterWordCounts || {};
+  const stats = d.chapterStats || {};
   const target = d.chapterTargetWords || 2500;
+  const PAGE_SIZE = 10;
+  const sorted = Object.entries(chapters).sort((a,b) => a[0].localeCompare(b[0]));
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const page = Math.min(chapterPage, totalPages - 1);
+  const slice = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const mItem = (lbl, val) => `<div class="detail-item"><span class="detail-val">${val}</span><span class="detail-lbl">${lbl}</span></div>`;
+  const pager = totalPages > 1 ? `
+            <div class="pagination">
+              <button type="button" onclick="chapterPage=Math.max(0,chapterPage-1);render()" ${page===0?'disabled':''}>← prev</button>
+              <span>${page+1} / ${totalPages}</span>
+              <button type="button" onclick="chapterPage=Math.min(${totalPages-1},chapterPage+1);render()" ${page===totalPages-1?'disabled':''}>next →</button>
+            </div>` : '';
   const chapterRow = (path, wc) => {
     const name = path.split('/').pop().replace('.md','');
     const cpct = Math.min(Math.round(wc / target * 100), 100);
+    const s = stats[path] || {};
+    const details = expandedChapters.has(path) ? `
+              <div class="chapter-details">
+                ${mItem('LIX', s.lix || '—')}
+                ${mItem('Dialogue', `${s.dialogueRatio || 0}%`)}
+                ${mItem('S-Len', s.sentenceLengthAvg || '—')}
+                ${mItem('Passive', s.passiveRatio || '—')}
+                ${mItem('Adverbs', s.adverbRatio || '—')}
+                ${mItem('TTR', s.ttr || '—')}
+                ${mItem('Sentiment', s.sentimentPolarity || '—')}
+              </div>` : '';
     return `
-              <div class="chapter-item">
-                <span class="title">${name}</span>
-                <div class="bar"><span style="width:${cpct}%"></span></div>
-                <span class="num">${fmt(wc)} w &middot; ${pp(wc)} pp</span>
+              <div class="chapter-row">
+                <div class="chapter-item" onclick="toggleChapter('${path}')">
+                  <span class="title">${name}</span>
+                  <div class="bar"><span style="width:${cpct}%"></span></div>
+                  <span class="num">${fmt(wc)} w &middot; ${pp(wc)} pp</span>
+                </div>
+                ${details}
               </div>`;
   };
   return `
@@ -639,16 +607,9 @@ function buildChapters(d) {
         ${Object.keys(chapters).length ? `
         <div class="reveal reveal-d1">
           <div class="chapter-list">
-            ${(() => {
-              const sorted = Object.entries(chapters).sort((a,b) => a[0].localeCompare(b[0]));
-              if (sorted.length <= 6) {
-                return sorted.map(([path, wc]) => chapterRow(path, wc, target)).join('');
-              }
-              const first = sorted.slice(0, 3).map(([path, wc]) => chapterRow(path, wc, target)).join('');
-              const last = sorted.slice(-3).map(([path, wc]) => chapterRow(path, wc, target)).join('');
-              return first + '<div class="chapter-item" style="justify-content:center;color:var(--ink-faint);font-style:italic;">... ' + (sorted.length - 6) + ' more chapters ...</div>' + last;
-            })()}
+            ${slice.map(([path, wc]) => chapterRow(path, wc)).join('')}
           </div>
+          ${pager}
         </div>
         ` : '<div class="sub">No chapter data yet</div>'}
         <p class="note">${Object.keys(chapters).length} chapters tracked. Target is ${target} words each. ${Object.values(chapters).filter(w => w >= target).length} hit the mark.</p>
@@ -656,67 +617,43 @@ function buildChapters(d) {
     </section>`;
 }
 
-function buildSchedule() {
-  const peakH = peakHour(progress.commitHours);
-  const totalCommits = totalCommitDays(progress.commitHours);
-  const distinctHours = Object.keys(progress.commitHours).length;
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const dayCounts = [0, 0, 0, 0, 0, 0, 0];
-  for (const day of progress.days) {
-    const d = new Date(day.date).getDay();
-    dayCounts[d]++;
-  }
-  let bestDayIdx = 0;
-  let secondIdx = 1;
-  for (let i = 0; i < 7; i++) {
-    if (dayCounts[i] > dayCounts[bestDayIdx]) { secondIdx = bestDayIdx; bestDayIdx = i; }
-    else if (dayCounts[i] > dayCounts[secondIdx] && i !== bestDayIdx) secondIdx = i;
-  }
-  const bestDay = dayNames[bestDayIdx];
-  const max = Math.max(...dayCounts, 1);
+function buildHabits() {
   return `
     <section>
       <div class="container fade">
         <div class="chapter-num">Chapter XIV</div>
         <h2><em>When</em> I <strong>write</strong></h2>
-        <div class="sub">My peak hour is ${peakH}:00</div>
         <div class="reveal reveal-d1"><div class="chart-wrap"><canvas id="hoursChart"></canvas></div></div>
-        <p class="note">I commit most often at ${peakH}:00. ${totalCommits} commits across ${distinctHours} distinct hours.</p>
+        <p class="note" style="margin-top:12px;">Morning 04–08 &middot; Noon 08–12 &middot; Afternoon 12–18 &middot; Evening 18–22 &middot; Night 22–04</p>
       </div>
     </section>
-
     <section>
       <div class="container fade">
         <div class="chapter-num">Chapter XV</div>
         <h2><em>Which</em> days I <strong>show up</strong></h2>
-        <div class="sub">${bestDay} is my best writing day</div>
-        <div class="reveal reveal-d1">
-          <div class="section-grid" style="margin-bottom:0;display:flex;flex-wrap:wrap;">
-            ${dayShort.map((name, i) => {
-              const intensity = max > 0 ? dayCounts[i] / max : 0;
-              return '<div class="section-cell" style="position:relative;flex:1;min-width:80px;"><div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent);opacity:' + (intensity * 0.35) + ';"></div><div class="val" style="position:relative;color:var(--accent);font-size:1rem;">' + name + '</div><div class="pages" style="position:relative;">' + dayCounts[i] + '</div></div>';
-            }).join('')}
-          </div>
-        </div>
-        <p class="note">${bestDay} has ${dayCounts[bestDayIdx]} commits, the most of any day. ${dayNames[secondIdx]} follows with ${dayCounts[secondIdx]}. The pattern is clear.</p>
-        <div style="margin-top:60px;text-align:center;">
-          <button class="share-btn" onclick="share()">share this page</button>
-          <p style="color:var(--accent);font-size:0.7rem;margin-top:24px;font-style:italic;">Want to know when it is finished? <a href="mailto:hampus.adamsson@gmail.com" style="color:var(--accent);">Send me an email</a></p>
-        </div>
+        <div class="reveal reveal-d1"><div id="dayBoxes"></div></div>
       </div>
     </section>`;
 }
 
+function renderDayBoxes() {
+  const el=document.getElementById('dayBoxes');
+  if(!el)return;
+  const dayShort=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayCounts=[0,0,0,0,0,0,0];
+  for(const day of progress.days){const d=new Date(day.date).getDay();dayCounts[d]++;}
+  const max=Math.max(...dayCounts,1);
+  el.innerHTML=`<div class="card-grid">${dayShort.map((name,i)=>{const intensity=dayCounts[i]/max;return`<div class="card-cell"><div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent);opacity:${(intensity*0.35).toFixed(2)};"></div><div class="val">${name}</div><div class="pages">${dayCounts[i]}</div></div>`}).join('')}</div>`;
+}
+
 function render() {
-  if (!progress || !progress.days.length) {
+  if (!progress?.days.length) {
     document.getElementById('app').innerHTML = '<div style="text-align:center;padding:80px 0;color:var(--ink-faint);font-style:italic;">No data yet. Run <code>pnpm extract</code>.</div>';
     return;
   }
 
   const d = progress;
   const days = d.days;
-  const trackSection = d.textAnalysisSection || 'Manuscript';
   // Use chapter word counts for accurate current state
   const chapterWords = Object.values(d.chapterWordCounts || {}).reduce((a, b) => a + b, 0);
   const totalWords = chapterWords || (days.length > 0 ? days[days.length - 1].totalWords : 0);
@@ -733,14 +670,14 @@ function render() {
     buildHero(d, days, totalWords, est, sectionGoal, dailyAvg) +
     buildProgress(d, totalWords, sectionGoal, dailyAvg, est) +
     buildSessions(dailyAvg) +
-    buildSections(d, totalWords) +
     buildChapters(d) +
     buildStyle(d, stats, t, dailyAvg) +
-    buildSchedule();
+    buildHabits();
 
   renderProgressChart(days, totalWords, { ...d, totalGoal: sectionGoal });
   renderSessionsChart();
   renderHoursChart();
+  renderDayBoxes();
   setupReveal();
 }
 
@@ -753,7 +690,7 @@ function renderProgressChart(days, totalWords, d) {
   const faint = dark ? '#c9a96e' : '#8b6914';
   const goalCol = dark ? '#3a3228' : '#d8d3c7';
   const greenCol = dark ? '#7a9a6e33' : '#c0d6b8';
-  const goldCol = dark ? '#c9a96e33' : '#d4c8a8';
+  const goldCol = faint + '66';
   const labels = days.map(d => d.date);
   const paceBase = d.dailyGoal;
   const est = d.estimatedFinish || {};
@@ -784,8 +721,8 @@ function renderProgressChart(days, totalWords, d) {
       datasets: [
         { data: extActual, borderColor: ink, borderWidth: 2, pointRadius: 1.5, pointBackgroundColor: dark ? '#c9a96e' : '#8b6914', tension: 0.2, spanGaps: false },
         { data: extLabels.map(() => d.totalGoal), borderColor: goalCol, borderWidth: 1, borderDash: [4, 8], pointRadius: 0 },
-        { data: extGoal, borderColor: greenCol, borderWidth: 1, borderDash: [2, 6], pointRadius: 0 },
-        { data: extPace, borderColor: goldCol, borderWidth: 1, borderDash: [1, 8], pointRadius: 0 }
+        { data: extGoal, borderColor: greenCol, borderWidth: 1.5, borderDash: [2, 6], pointRadius: 0 },
+        { data: extPace, borderColor: goldCol, borderWidth: 1.5, borderDash: [1, 8], pointRadius: 0 }
       ]
     },
     options: {
@@ -794,7 +731,7 @@ function renderProgressChart(days, totalWords, d) {
       plugins: { legend: { display: false } },
       scales: {
         x: { ticks: { color: faint, maxTicksLimit: 8, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } },
-        y: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } }
+        y: { beginAtZero: true, ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 }, callback: v => v >= 1000 ? v / 1000 : v }, grid: { display: false } }
       }
     }
   });
@@ -839,22 +776,30 @@ function renderHoursChart() {
   const grid = dark ? '#2d261e' : '#e8e3d7';
   const faint = dark ? '#c9a96e' : '#8b6914';
   const hours = progress.commitHours || {};
-  const labels = Array.from({ length: 24 }, (_, i) => i);
+  const bins = [
+    { label: 'Morning', range: [4, 5, 6, 7] },
+    { label: 'Noon', range: [8, 9, 10, 11] },
+    { label: 'Afternoon', range: [12, 13, 14, 15, 16, 17] },
+    { label: 'Evening', range: [18, 19, 20, 21] },
+    { label: 'Night', range: [22, 23, 0, 1, 2, 3] },
+  ];
+  const data = bins.map(b => b.range.reduce((s, h) => s + (hours[h] || 0), 0));
+  const timeRanges = { Morning: '04–08', Noon: '08–12', Afternoon: '12–18', Evening: '18–22', Night: '22–04' };
   Chart.getChart('hoursChart')?.destroy();
   new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: labels.map(h => `${h}`),
+      labels: bins.map(b => b.label),
       datasets: [{
-        data: labels.map(h => hours[h] || 0),
-        backgroundColor: labels.map(h => (hours[h] || 0) > 0 ? ink : grid),
+        data,
+        backgroundColor: data.map(d => d > 0 ? ink : grid),
         borderWidth: 0, borderRadius: 0
       }]
     },
     options: {
       responsive: true,
       animation: { duration: 800, easing: 'easeInOutQuart' },
-      plugins: { legend: { display: false } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => timeRanges[ctx.label] || ctx.label } } },
       scales: {
         x: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { display: false } },
         y: { ticks: { color: faint, font: { family: 'IBM Plex Mono', size: 9 } }, grid: { color: grid } }
@@ -870,14 +815,14 @@ function setupReveal() {
     });
   }, { threshold: 0.25, rootMargin: '0px 0px -40px 0px' });
 
-  document.querySelectorAll('.fade').forEach(el => observer.observe(el));
+  document.querySelectorAll('.fade').forEach(el => { observer.observe(el); });
 
   const thumb = document.getElementById('scroll-thumb');
   if (thumb) {
     window.addEventListener('scroll', () => {
       const h = document.documentElement;
       const pct = h.scrollTop / (h.scrollHeight - h.clientHeight) * 100;
-      thumb.style.height = Math.min(pct, 100) + '%';
+      thumb.style.height = `${Math.min(pct, 100)}%`;
     }, { passive: true });
   }
 }

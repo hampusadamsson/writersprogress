@@ -8,7 +8,8 @@ describe('config', () => {
     assert.ok(config.bookFolder.endsWith('Ruindykarna'))
     assert.strictEqual(config.dailyWordGoal, 500)
     assert.strictEqual(config.totalWordGoal, 80_000)
-    assert.ok(config.trackPatterns.includes('**/*.md'))
+    assert.strictEqual(config.textAnalysisSection, '04 - Manuscript')
+    assert.strictEqual(config.language, null)
   })
 
   it('throws on missing bookFolder', async () => {
@@ -78,7 +79,6 @@ describe('aggregate', () => {
     assert.ok(typeof report.totalWords === 'number')
     assert.ok(typeof report.dailyGoal === 'number')
     assert.ok(typeof report.totalGoal === 'number')
-    assert.ok(report.perSection)
 
     if (report.days.length > 0) {
       const day = report.days[0]

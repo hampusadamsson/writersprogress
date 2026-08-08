@@ -29,10 +29,8 @@ Config file (bookprogress.config.json):
   dailyWordGoal         Target words per writing session
   totalWordGoal         Target total words for finished book
   chapterTargetWords    Expected words per chapter (for progress bars)
-  textAnalysisSection   Which folder to analyze for text metrics
-  trackPatterns         Glob patterns for files to track
-  excludePatterns       Glob patterns for files to skip
-  thresholds            Color thresholds for metric cards
+  textAnalysisSection   Path to manuscript files (sole tracked path)
+v  thresholds            Color thresholds for metric cards
 
 Examples:
   pnpm extract                          # Full extract with defaults

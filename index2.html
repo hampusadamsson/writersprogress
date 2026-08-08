@@ -85,29 +85,37 @@
   .card .lbl { font-size: 0.65rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px; }
   .card .sub { font-size: 0.7rem; color: var(--accent); margin-top: 1px; }
 
-  .section-grid {
+  .card-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1px; background: var(--line); border: 1px solid var(--line); margin-bottom: 12px;
+    gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 8px; margin-bottom: 12px;
   }
-  .section-cell { background: var(--paper); padding: 12px; }
-  .section-cell .val { font-family: 'IBM Plex Mono', monospace; font-size: 1.1rem; font-weight: 500; }
-  .section-cell .pages { font-size: 0.7rem; color: var(--accent); }
-  .section-cell .lbl { font-size: 0.6rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 3px; }
+  .card-cell { background: var(--paper); padding: 14px 8px; text-align: center; position: relative; }
+  .card-cell .val { font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 500; position: relative; }
+  .card-cell .pages { font-size: 0.65rem; color: var(--ink); margin-top: 2px; position: relative; }
 
-  .metric-line { position: relative; height: 36px; margin: 12px 0 20px; }
+  .metric-line { position: relative; height: 52px; margin: 10px 0 18px; }
   .metric-line .track { position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--line); }
   .metric-line .fill { position: absolute; left: 0; top: 50%; height: 1px; background: var(--ink); }
   .metric-line .marker { position: absolute; top: 50%; margin-left: -4px; margin-top: -5px; width: 8px; height: 10px; background: var(--ink); }
   .metric-line .mark-label { position: absolute; top: 50%; margin-top: -18px; font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink); transform: translateX(-50%); }
   .metric-line .ref { position: absolute; top: 50%; margin-top: -6px; width: 1px; height: 12px; background: var(--ink-faint); }
-  .metric-line .ref-label { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 0.5rem; color: var(--accent); white-space: nowrap; }
+  .metric-line .ref-label { position: absolute; font-family: 'IBM Plex Mono', monospace; font-size: 0.45rem; color: var(--accent); white-space: nowrap; line-height:1.3; }
 
   .chapter-list { display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); }
-  .chapter-item { background: var(--paper); padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; }
+  .chapter-item { background: var(--paper); padding: 8px 12px; display: flex; align-items: center; gap: 10px; font-size: 0.8rem; cursor: pointer; }
+  .chapter-item:hover { background: var(--line); }
   .chapter-item .title { flex: 1; font-style: italic; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .chapter-item .bar { width: 80px; height: 2px; background: var(--line); position: relative; }
+  .chapter-item .bar { width: 80px; height: 2px; background: var(--line); position: relative; flex-shrink: 0; }
   .chapter-item .bar span { position: absolute; left: 0; top: 0; height: 100%; background: var(--accent); }
-  .chapter-item .num { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink-faint); min-width: 70px; text-align: right; }
+  .chapter-item .num { font-family: 'IBM Plex Mono', monospace; font-size: 0.6rem; color: var(--ink-faint); width: 120px; text-align: right; flex-shrink: 0; }
+  .chapter-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 12px; background: var(--paper); border-left: 2px solid var(--accent); font-size: 0.7rem; }
+  .detail-item { display: flex; flex-direction: column; }
+  .detail-val { font-family: 'IBM Plex Mono', monospace; font-weight: 500; }
+  .detail-lbl { color: var(--ink-faint); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.04em; }
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 12px; font-family: 'IBM Plex Mono', monospace; font-size: 0.7rem; }
+  .pagination button { background: none; border: 1px solid var(--line); color: var(--ink-faint); padding: 4px 12px; cursor: pointer; font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; }
+  .pagination button:hover { border-color: var(--accent); color: var(--accent); }
+  .pagination button:disabled { opacity: 0.3; cursor: default; }
 
   .chart-wrap canvas { max-height: 180px; }
   .full { grid-column: 1 / -1; }
@@ -154,6 +162,14 @@
 
 let progress = null;
 let activeTab = 'overview';
+let expandedChapters = new Set();
+let chapterPage = 0;
+
+function toggleChapter(path) {
+  if (expandedChapters.has(path)) expandedChapters.delete(path);
+  else expandedChapters.add(path);
+  renderTabs();
+}
 
 function refresh() {
   try {
@@ -248,18 +264,6 @@ function buildOverview(d, days, totalWords, chapterWords, sectionGoal, pct, est,
     </div>
 
     <div class="grid" style="margin-top:12px;">
-      <div class="card">
-        <h2>Where the words live</h2>
-        <div class="section-grid">${Object.entries(d.perSection||{}).map(([name,info]) => `
-          <div class="section-cell">
-            <div class="val">${fmt(info.words)}</div>
-            <div class="pages">${pp(info.words)} pp</div>
-            <div class="lbl">${name} &middot; ${info.files} files</div>
-          </div>`).join('')}</div>
-      </div>
-    </div>
-
-    <div class="grid" style="margin-top:12px;">
       <div class="card full">
         <h2>Estimates</h2>
         <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:0.9rem;">
@@ -279,14 +283,13 @@ function buildStyle(d, stats, t, dailyAvg) {
     { label: 'Sentence length', value: Math.round(stats.sentenceLengthAvg), unit: 'w', domain: [0,45], marks: [{v:10,n:'Hemingway'},{v:12,n:'Rowling'},{v:17,n:'Avg fiction'},{v:40,n:'Faulkner'}] },
     { label: 'LIX readability', value: Math.round(stats.lix), unit: '', domain: [20,65], marks: [{v:25,n:'Potter'},{v:30,n:'Da Vinci'},{v:45,n:'News'},{v:55,n:'Academic'}] },
     { label: 'Dialogue', value: Math.round(stats.dialogueRatio), unit: '%', domain: [0,100], marks: [{v:30,n:'Tolkien'},{v:40,n:'Rowling'},{v:60,n:'Hemingway'}] },
+    { label: 'Sentiment', value: Math.round(stats.sentimentPolarity), unit: '', domain: [-100,100], marks: [{v:-40,n:'Tragedies'},{v:-10,n:'Noir'},{v:10,n:'Dramas'},{v:30,n:'Comedies'}] },
     { label: 'Passive voice', value: Math.round(stats.passiveRatio), unit: '', domain: [0,12], marks: [{v:2,n:'Good fiction'},{v:4,n:'News'},{v:10,n:'Academic'}] },
     { label: 'Adverbs', value: Math.round(stats.adverbRatio), unit: '', domain: [0,18], marks: [{v:5,n:'King'},{v:10,n:'Bestsellers'},{v:15,n:'Purple'}] },
     { label: 'Vocab range', value: Math.round(stats.ttr), unit: '', domain: [30,90], marks: [{v:35,n:'Simple'},{v:47,n:'Avg fiction'},{v:55,n:'Hemingway'},{v:70,n:'Joyce'},{v:85,n:'Shakespeare'}] },
     { label: 'Rewriting', value: d.editRatio, unit: '%', domain: [0,35], marks: [{v:5,n:'Draft'},{v:20,n:'Revision'},{v:30,n:'Polish'}] },
     { label: 'Daily writing', value: dailyAvg, unit: 'w', domain: [0,2800], marks: [{v:300,n:'Nabokov'},{v:500,n:'Hemingway'},{v:1000,n:'Rowling'},{v:2000,n:'King'},{v:2500,n:'Sanderson'}] },
   ];
-
-  const offsets = ['-16px','-28px','10px','22px'];
 
   return `
     <div class="grid">
@@ -305,16 +308,15 @@ function buildStyle(d, stats, t, dailyAvg) {
       ${metrics.map(m => {
         const mpct = Math.min((m.value - m.domain[0])/(m.domain[1] - m.domain[0])*100, 100);
         return `<div class="card">
-          <h2>${m.label} <strong>${m.value}${m.unit}</strong></h2>
+          <h2><em>${m.label}</em> <span style="color:var(--ink-faint);">${m.value}${m.unit}</span></h2>
           <div class="metric-line">
             <div class="track"></div>
             <div class="fill" style="width:${mpct}%"></div>
             <div class="marker" style="left:${mpct}%"></div>
             <div class="mark-label" style="left:${mpct}%">${m.value}${m.unit}</div>
-            ${m.marks.map((mk,mi) => {
+            ${m.marks.map(mk => {
               const rpct = (mk.v - m.domain[0])/(m.domain[1] - m.domain[0])*100;
-              const top = offsets[mi % offsets.length];
-              return `<div class="ref" style="left:${rpct}%"></div><div class="ref-label" style="left:${rpct}%;top:${top};">${mk.n} ${mk.v}${m.unit}</div>`;
+              return `<div class="ref" style="left:${rpct}%"></div><div class="ref-label" style="left:${rpct}%;top:31px;text-align:center;"><span style="display:block;">${mk.n}</span><span style="display:block;font-size:0.4rem;">${mk.v}${m.unit}</span></div>`;
             }).join('')}
           </div>
         </div>`;
@@ -325,22 +327,50 @@ function buildStyle(d, stats, t, dailyAvg) {
 // ── Chapters ──
 function buildChapters(d, wpp) {
   const chapters = d.chapterWordCounts || {};
+  const stats = d.chapterStats || {};
   const target = d.chapterTargetWords || 2500;
+  const PAGE_SIZE = 10;
   const sorted = Object.entries(chapters).sort((a,b) => a[0].localeCompare(b[0]));
+  const totalPages = Math.ceil(sorted.length / PAGE_SIZE);
+  const page = Math.min(chapterPage, totalPages - 1);
+  const slice = sorted.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  const mItem = (lbl, val) => `<div class="detail-item"><span class="detail-val">${val}</span><span class="detail-lbl">${lbl}</span></div>`;
+  const pager = totalPages > 1 ? `
+    <div class="pagination">
+      <button type="button" onclick="chapterPage=Math.max(0,chapterPage-1);renderTabs()" ${page===0?'disabled':''}>← prev</button>
+      <span>${page+1} / ${totalPages}</span>
+      <button type="button" onclick="chapterPage=Math.min(${totalPages-1},chapterPage+1);renderTabs()" ${page===totalPages-1?'disabled':''}>next →</button>
+    </div>` : '';
   return `
     <div class="grid">
       <div class="card full"><h2>Chapter word counts</h2>
         <div class="chapter-list">
-          ${sorted.map(([path, wc]) => {
+          ${slice.map(([path, wc]) => {
             const name = path.split('/').pop().replace('.md','');
             const cpct = Math.min(Math.round(wc/target*100),100);
-            return `<div class="chapter-item">
-              <span class="title">${name}</span>
-              <div class="bar"><span style="width:${cpct}%"></span></div>
-              <span class="num">${fmt(wc)} w &middot; ${pp(wc)} pp</span>
-            </div>`;
+            const s = stats[path] || {};
+            const details = `
+              <div class="chapter-details">
+                ${mItem('LIX', s.lix || '—')}
+                ${mItem('Dialogue', `${s.dialogueRatio || 0}%`)}
+                ${mItem('S-Len', s.sentenceLengthAvg || '—')}
+                ${mItem('Passive', s.passiveRatio || '—')}
+                ${mItem('Adverbs', s.adverbRatio || '—')}
+                ${mItem('TTR', s.ttr || '—')}
+                ${mItem('Sentiment', s.sentimentPolarity || '—')}
+              </div>`;
+            return `
+              <div class="chapter-row">
+                <div class="chapter-item" onclick="toggleChapter('${path}')">
+                  <span class="title">${name}</span>
+                  <div class="bar"><span style="width:${cpct}%"></span></div>
+                  <span class="num">${fmt(wc)} w &middot; ${pp(wc)} pp</span>
+                </div>
+                ${expandedChapters.has(path) ? details : ''}
+              </div>`;
           }).join('')}
         </div>
+        ${pager}
       </div>
     </div>`;
 }
@@ -376,7 +406,7 @@ function renderProgressChart(days, totalWords, d) {
   let pGoal=totalWords,pPace=totalWords;
   while(cursor<=endDate){extLabels.push(cursor.toISOString().slice(0,10));extActual.push(null);pGoal=Math.min(pGoal+paceBase,d.totalGoal);pPace=Math.min(pPace+dailyAvg,d.totalGoal);extGoal.push(pGoal);extPace.push(pPace);cursor.setDate(cursor.getDate()+1);}
   Chart.getChart('progressChart')?.destroy();
-  new Chart(ctx,{type:'line',data:{labels:extLabels,datasets:[{data:extActual,borderColor:ink,borderWidth:1.5,pointRadius:1,pointBackgroundColor:dark?'#c9a96e':'#8b6914',tension:0.2,spanGaps:false},{data:extLabels.map(()=>d.totalGoal),borderColor:goalCol,borderWidth:1,borderDash:[4,8],pointRadius:0},{data:extGoal,borderColor:dark?'#7a9a6e33':'#c0d6b8',borderWidth:1,borderDash:[2,6],pointRadius:0},{data:extPace,borderColor:dark?'#c9a96e33':'#d4c8a8',borderWidth:1,borderDash:[1,8],pointRadius:0}]},options:{responsive:!0,animation:{duration:1200,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,maxTicksLimit:8,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
+  new Chart(ctx,{type:'line',data:{labels:extLabels,datasets:[{data:extActual,borderColor:ink,borderWidth:1.5,pointRadius:1,pointBackgroundColor:dark?'#c9a96e':'#8b6914',tension:0.2,spanGaps:false},{data:extLabels.map(()=>d.totalGoal),borderColor:goalCol,borderWidth:1,borderDash:[4,8],pointRadius:0},{data:extGoal,borderColor:dark?'#7a9a6e33':'#c0d6b8',borderWidth:1.5,borderDash:[2,6],pointRadius:0},{data:extPace,borderColor:faint+'66',borderWidth:1.5,borderDash:[1,8],pointRadius:0}]},options:{responsive:!0,animation:{duration:1200,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,maxTicksLimit:8,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9},callback:v=>v>=1000?v/1000:v},grid:{display:!1}}}}});
 }
 
 function renderSessionsChart() {
@@ -412,9 +442,17 @@ function renderHoursChart() {
   const grid=dark?'#2d261e':'#e8e3d7';
   const faint=dark?'#c9a96e':'#8b6914';
   const hours=progress.commitHours||{};
-  const labels=Array.from({length:24},(_,i)=>i);
+  const bins=[
+    {label:'Morning', range:[4,5,6,7]},
+    {label:'Noon', range:[8,9,10,11]},
+    {label:'Afternoon', range:[12,13,14,15,16,17]},
+    {label:'Evening', range:[18,19,20,21]},
+    {label:'Night', range:[22,23,0,1,2,3]},
+  ];
+  const data=bins.map(b=>b.range.reduce((s,h)=>s+(hours[h]||0),0));
+  const timeRanges={Morning:'04–08',Noon:'08–12',Afternoon:'12–18',Evening:'18–22',Night:'22–04'};
   Chart.getChart('hoursChart')?.destroy();
-  new Chart(ctx,{type:'bar',data:{labels:labels.map(h=>`${h}`),datasets:[{data:labels.map(h=>hours[h]||0),backgroundColor:labels.map(h=>(hours[h]||0)>0?ink:grid),borderWidth:0,borderRadius:0}]},options:{responsive:!0,animation:{duration:800,easing:'easeInOutQuart'},plugins:{legend:{display:!1}},scales:{x:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{display:!1}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
+  new Chart(ctx,{type:'bar',data:{labels:bins.map(b=>b.label),datasets:[{data,backgroundColor:data.map(d=>d>0?ink:grid),borderWidth:0,borderRadius:0}]},options:{responsive:!0,animation:{duration:800,easing:'easeInOutQuart'},plugins:{legend:{display:!1},tooltip:{callbacks:{label:ctx=>timeRanges[ctx.label]||ctx.label}}},scales:{x:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{display:!1}},y:{ticks:{color:faint,font:{family:'IBM Plex Mono',size:9}},grid:{color:grid}}}}});
 }
 
 function renderDayBoxes() {
@@ -424,7 +462,7 @@ function renderDayBoxes() {
   const dayCounts=[0,0,0,0,0,0,0];
   for(const day of progress.days){const d=new Date(day.date).getDay();const idx=d===0?6:d-1;dayCounts[idx]++;}
   const max=Math.max(...dayCounts,1);
-  el.innerHTML=`<div class="section-grid" style="margin-top:8px;">${dayShort.map((name,i)=>{const intensity=dayCounts[i]/max;return`<div class="section-cell" style="position:relative;"><div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent);opacity:${(intensity*0.35).toFixed(2)};"></div><div class="val" style="position:relative;color:var(--accent);font-size:0.9rem;">${name}</div><div class="pages" style="position:relative;">${dayCounts[i]}</div></div>`}).join('')}</div>`;
+  el.innerHTML=`<div class="card-grid">${dayShort.map((name,i)=>{const intensity=dayCounts[i]/max;return`<div class="card-cell"><div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--accent);opacity:${(intensity*0.35).toFixed(2)};"></div><div class="val">${name}</div><div class="pages">${dayCounts[i]}</div></div>`}).join('')}</div>`;
 }
 
 // ── Utils ──

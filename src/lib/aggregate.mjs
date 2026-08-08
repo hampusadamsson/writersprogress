@@ -15,7 +15,8 @@
  * @property {string} path
  * @property {number} wordsAdded
  * @property {number} wordsRemoved
- * @property {number} section
+ * @property {boolean} [deleted]
+ * @property {TextStats} [textStats]
  */
 
 /**
@@ -24,7 +25,6 @@
  * @property {number} dialogueRatio
  * @property {number} lix
  * @property {number} paragraphCount
- * @property {Object<string, number>} characterMentions
  */
 
 /**
@@ -34,16 +34,16 @@
  * @property {number} dailyGoal
  * @property {number} totalGoal
  * @property {string} [estimatedFinish]
- * @property {Object} perSection
  * @property {Object<string,number>} commitHours
  * @property {Object<string,{total:number, days: Object<string,number>}>} characterTrends
  * @property {Object<string, number>} chapterWordCounts
  * @property {number} editRatio
  */
 
-import { getCommitHistory, getFileContent, getWordDiff } from './git.mjs'
-import { analyzeText } from './textstats.mjs'
 import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { getCommitHistory, getFileContent, getWordDiff } from './git.mjs'
+import { analyzeText, detectLanguage } from './textstats.mjs'
 
 /**
  * Aggregate git history into daily progress report
@@ -60,8 +60,10 @@ export async function buildReport(cwd, config) {
   /** @type {Object<string, number>} */
   const commitHours = {}
 
-  /** @type {Map<string, {wordCount: number, textStats: ReturnType<typeof analyzeText>}>} */
+  /** @type {Map<string, ReturnType<typeof analyzeText>>} */
   const fileAnalysisCache = new Map()
+
+  let lang = config.language || null
 
   for (const commit of commits) {
     const dateKey = commit.date.slice(0, 10)
@@ -84,34 +86,27 @@ export async function buildReport(cwd, config) {
 
     for (const file of commit.files) {
       const resolvedPath = resolveRenamePath(file.path)
-      if (!isFileTracked(resolvedPath, config) || !resolvedPath.endsWith('.md')) continue
+      if (!isInAnalysisSection(resolvedPath, config)) continue
 
       const wordDiff = await getWordDiff(cwd, commit.hash, commit.parent, resolvedPath)
-      const section = getSection(resolvedPath)
-
       // Check if file was deleted (numstat shows 0 adds, >0 deletes = removed from repo)
       const isDeleted = file.added === 0 && file.deleted > 0
 
       // Text analysis for all markdown files
-      let fileTextStats
       const cacheKey = `${commit.hash}:${resolvedPath}`
       if (!fileAnalysisCache.has(cacheKey)) {
         const content = await getFileContent(cwd, commit.hash, resolvedPath)
         if (content) {
-          const stats = analyzeText(content)
-          fileAnalysisCache.set(cacheKey, { wordCount: stats.wordCount, textStats: stats })
+          if (!lang) lang = detectLanguage(content)
+          fileAnalysisCache.set(cacheKey, analyzeText(content, lang))
         }
       }
-      const cached = fileAnalysisCache.get(cacheKey)
-      if (cached) {
-        fileTextStats = cached.textStats
-      }
+      const fileTextStats = fileAnalysisCache.get(cacheKey)
 
       day.files.push({
         path: resolvedPath,
         wordsAdded: wordDiff.added,
         wordsRemoved: wordDiff.removed,
-        section,
         deleted: isDeleted,
         textStats: fileTextStats,
       })
@@ -136,16 +131,23 @@ export async function buildReport(cwd, config) {
     day.totalWords = running
   }
 
-  // Aggregate text stats per day (from file-level stats in day.files)
+  // Aggregate text stats per day from snapshot of ALL files at that point
+  /** @type {Map<string, ReturnType<typeof analyzeText>>} */
+  const fileSnapshot = new Map()
   for (const day of days) {
-    const analysesForDay = []
+    // Update snapshot with files modified today
     for (const f of day.files) {
-      if (f.textStats) {
-        analysesForDay.push({
-          wordCount: f.textStats.wordCount || f.wordsAdded,
-          textStats: f.textStats,
-        })
+      if (f.textStats && !f.deleted) {
+        fileSnapshot.set(f.path, f.textStats)
+      } else if (f.deleted) {
+        fileSnapshot.delete(f.path)
       }
+    }
+
+    // Weighted average across entire manuscript at this point
+    const analysesForDay = []
+    for (const ts of fileSnapshot.values()) {
+      analysesForDay.push({ wordCount: ts.wordCount, textStats: ts })
     }
 
     if (analysesForDay.length > 0) {
@@ -159,14 +161,9 @@ export async function buildReport(cwd, config) {
       day.textStats = {
         sentenceLengthAvg: wavg('sentenceLengthAvg'),
         sentenceLengthStdDev: wavg('sentenceLengthStdDev'),
-        dialogueRatio: Math.round(
-          analysesForDay.reduce((s, a) => s + a.textStats.dialogueRatio * a.wordCount, 0) /
-            totalWords,
-        ),
+        dialogueRatio: wavg('dialogueRatio'),
         lix: wavg('lix'),
-        flesch: Math.round(
-          analysesForDay.reduce((s, a) => s + a.textStats.flesch * a.wordCount, 0) / totalWords,
-        ),
+        flesch: wavg('flesch'),
         paragraphCount: analysesForDay.reduce((s, a) => s + a.textStats.paragraphCount, 0),
         passiveRatio: wavg('passiveRatio'),
         adverbRatio: wavg('adverbRatio'),
@@ -174,18 +171,13 @@ export async function buildReport(cwd, config) {
         hapaxCount: analysesForDay.reduce((s, a) => s + a.textStats.hapaxCount, 0),
         honoreR: wavg('honoreR'),
         topWordFreq: wavg('topWordFreq'),
-        sentimentPolarity: Math.round(
-          analysesForDay.reduce((s, a) => s + a.textStats.sentimentPolarity * a.wordCount, 0) /
-            totalWords,
-        ),
+        sentimentPolarity: wavg('sentimentPolarity'),
         sentimentDensity: wavg('sentimentDensity'),
-        entities: {},
       }
     }
   }
 
   const totalWords = days.length > 0 ? days[days.length - 1].totalWords : 0
-  const perSection = computePerSection(days)
   const estimatedFinish = computeEstimate(
     days,
     totalWords,
@@ -193,21 +185,22 @@ export async function buildReport(cwd, config) {
     config.dailyWordGoal,
   )
 
-  // Chapter word counts (from most recent file stats across all days)
+  // Chapter word counts and stats (from most recent file stats across all days)
   const chapterWordCounts = {}
+  const chapterStats = {}
   const seenPaths = new Set()
   for (let i = days.length - 1; i >= 0; i--) {
     for (const f of days[i].files) {
-      if (f.section !== config.textAnalysisSection || seenPaths.has(f.path) || f.deleted) continue
+      if (seenPaths.has(f.path) || f.deleted) continue
       seenPaths.add(f.path)
       if (f.textStats) {
         chapterWordCounts[f.path] = f.textStats.wordCount
+        chapterStats[f.path] = f.textStats
       }
     }
   }
 
   // Filter chapterWordCounts to only files that exist at HEAD
-  const { join } = await import('node:path')
   for (const path of Object.keys(chapterWordCounts)) {
     if (!existsSync(join(cwd, path))) {
       delete chapterWordCounts[path]
@@ -257,76 +250,23 @@ export async function buildReport(cwd, config) {
     authorName: config.authorName,
     textAnalysisSection: config.textAnalysisSection,
     estimatedFinish,
-    perSection,
     commitHours,
     characterTrends,
     chapterWordCounts,
+    chapterStats,
     editRatio,
     thresholds: config.thresholds,
   }
 }
 
 /**
- * Check if file should be tracked
+ * Check if file path falls within the textAnalysisSection.
+ * Matches exact path or any path under the section folder.
  */
-function isFileTracked(path, config) {
-  for (const pattern of config.excludePatterns) {
-    if (matchSimple(pattern, path)) return false
-  }
-  return true
-}
-
-/**
- * Simple glob match (supports ** and *)
- */
-function matchSimple(pattern, str) {
-  const regex = pattern
-    .replace(/\*\*/g, '<<DOUBLESTAR>>')
-    .replace(/\*/g, '[^/]*')
-    .replace(/<<DOUBLESTAR>>/g, '.*')
-  return new RegExp(`^${regex}$`).test(str)
-}
-
-/**
- * Extract section from path: "04 - Manuscript" → "Manuscript"
- */
-function getSection(path) {
-  const parts = path.split('/')
-  if (parts.length >= 2) {
-    return parts[0].replace(/^\d+\s*-\s*/, '')
-  }
-  return 'Root'
-}
-
-/**
- * Compute per-section stats
- */
-function computePerSection(days) {
-  /** @type {Map<string, {words: number, files: Set<string>}>} */
-  const sections = new Map()
-  // Walk days in reverse, first non-deleted occurrence of each file gives its word count
-  const seenFiles = new Set()
-  for (let i = days.length - 1; i >= 0; i--) {
-    for (const file of days[i].files) {
-      if (file.deleted || seenFiles.has(file.path)) continue
-      seenFiles.add(file.path)
-      if (!sections.has(file.section)) {
-        sections.set(file.section, { words: 0, files: new Set() })
-      }
-      const s = sections.get(file.section)
-      // Use textStats.wordCount for actual content, fall back to wordsAdded
-      const wc = file.textStats?.wordCount || file.wordsAdded || 0
-      s.words += wc
-      s.files.add(file.path)
-    }
-  }
-
-  return Object.fromEntries(
-    [...sections.entries()].map(([name, data]) => [
-      name,
-      { words: data.words, files: data.files.size },
-    ]),
-  )
+function isInAnalysisSection(path, config) {
+  if (!config.textAnalysisSection || !path.endsWith('.md')) return false
+  const section = config.textAnalysisSection.replace(/\/+$/, '')
+  return path === section || path.startsWith(`${section}/`)
 }
 
 /**

@@ -176,24 +176,6 @@ export async function getFileContent(cwd, commitHash, filePath) {
 }
 
 /**
- * Check if file exists at a specific commit.
- * Uses git cat-file -e (fast, no content transfer).
- * @param {string} cwd
- * @param {string} commitHash
- * @param {string} filePath
- * @returns {Promise<boolean>}
- */
-export async function fileExistsAtCommit(cwd, commitHash, filePath) {
-  const git = simpleGit(cwd)
-  try {
-    await git.raw(['cat-file', '-e', `${commitHash}:${filePath}`])
-    return true
-  } catch {
-    return false
-  }
-}
-
-/**
  * Count added/removed words from git word-diff porcelain output
  */
 function countWordDiff(diff) {

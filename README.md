@@ -35,8 +35,6 @@ All settings in `bookprogress.config.json`:
   "totalWordGoal": 80000,
   "chapterTargetWords": 2500,
   "textAnalysisSection": "Manuscript",
-  "trackPatterns": ["**/*.md"],
-  "excludePatterns": ["templates/**", "**/.gitkeep"],
   "thresholds": {
     "adverbRatio": { "good": 5, "warn": 10 },
     "passiveRatio": { "good": 2, "warn": 5 },
@@ -55,10 +53,11 @@ All settings in `bookprogress.config.json`:
 | `dailyWordGoal` | `500` | Target words per writing session |
 | `totalWordGoal` | `80000` | Target total word count |
 | `chapterTargetWords` | `2500` | Expected words per chapter |
-| `textAnalysisSection` | `Manuscript` | Which folder to analyze for text metrics |
-| `trackPatterns` | `**/*.md` | Files to include |
-| `excludePatterns` | `templates/**`… | Files to skip |
+| `textAnalysisSection` | `Manuscript` | Which folder to analyze for text metrics (and sole tracked path) |
+| `language` | `null` | `"swedish"`, `"english"`, or `null` for auto-detect |
 | `thresholds` | (see above) | Color thresholds for metric cards |
+
+> **Note:** Only files under `textAnalysisSection` are tracked and analyzed. `trackPatterns` and `excludePatterns` are removed — all filtering is now path-prefix based.
 
 ## CLI
 

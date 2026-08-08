@@ -6,8 +6,7 @@ const DEFAULTS = {
   totalWordGoal: 80_000,
   chapterTargetWords: 2_500,
   textAnalysisSection: 'Manuscript',
-  trackPatterns: ['**/*.md'],
-  excludePatterns: ['templates/**', '**/.gitkeep', '**/*.base', '**/.sync-conflict*'],
+  language: null, // 'swedish' | 'english' | null (auto-detect)
   wordsPerPage: 300,
   authorName: 'Hampus Adamsson',
 }
@@ -19,9 +18,8 @@ const DEFAULTS = {
  * @property {number} totalWordGoal
  * @property {number} chapterTargetWords
  * @property {string} textAnalysisSection
- * @property {string[]} trackPatterns
- * @property {string[]} excludePatterns
  * @property {Object} [thresholds]
+ * @property {'swedish'|'english'|null} [language]
  */
 
 /**

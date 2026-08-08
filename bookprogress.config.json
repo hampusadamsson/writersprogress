@@ -3,16 +3,7 @@
   "dailyWordGoal": 500,
   "totalWordGoal": 80000,
   "chapterTargetWords": 2500,
-  "textAnalysisSection": "Manuscript",
-  "trackPatterns": [
-    "**/*.md"
-  ],
-  "excludePatterns": [
-    "templates/**",
-    "**/.gitkeep",
-    "**/*.base",
-    "**/.sync-conflict*"
-  ],
+  "textAnalysisSection": "04 - Manuscript",
   "thresholds": {
     "adverbRatio": {
       "good": 5,

@@ -1,359 +1,274 @@
 /**
- * Swedish text analysis for markdown files.
+ * Text analysis for markdown files — Swedish and English.
  * Readability, style, vocabulary richness, emotion.
  */
 
-// ── Swedish constants ──
+// ── Language dictionaries ──
 
-/** Common Swedish adverbs */
-const SWEDISH_ADVERBS = new Set([
-  'inte',
-  'mycket',
-  'så',
-  'nu',
-  'där',
-  'här',
-  'då',
-  'hur',
-  'när',
-  'alltid',
-  'aldrig',
-  'ofta',
-  'snabbt',
-  'långsamt',
-  'gärna',
-  'bara',
-  'nog',
-  'väl',
-  'ju',
-  'också',
-  'redan',
-  'fortfarande',
-  'kanske',
-  'ganska',
-  'riktigt',
-  'helt',
-  'nästan',
-  'precis',
-  'särskilt',
-  'speciellt',
-  'troligen',
-  'naturligtvis',
-  'egentligen',
-  'verkligen',
-  'äntligen',
-  'förstås',
-  'dessutom',
-  'emellertid',
-  'dock',
-  'nämligen',
-  'således',
-  'alltså',
-  'tillsammans',
-  'ganska',
-  'nästan',
-  'fram',
-  'tillbaka',
-  'hem',
-  'bort',
-  'dit',
-  'hit',
-  'upp',
-  'ner',
-  'ut',
-  'in',
-  'iväg',
-  'vidare',
-  'fort',
-  'allt',
-  'litet',
-  'lite',
-  'mindre',
-  'mer',
-  'mest',
-  'minst',
-  'ändå',
-  'trots',
-  'sedan',
-  'sen',
-  'kvar',
-  'igen',
-  'ändå',
-  'nog',
-  'visst',
-  'väl',
-  'ju',
-  'nog',
-  'tyvärr',
-  'lyckligtvis',
-  'möjligen',
-  'möjligtvis',
-  'knappt',
-  'nätt',
-  'nära',
-  'plötsligt',
-  'genast',
-  'omedelbart',
-  'ständigt',
-  'stillasittande',
-  'försiktigt',
-  'tyst',
-  'högt',
-  'lågt',
-  'lugnt',
-  'sakta',
-  'förgäves',
-  'verkligen',
-  'faktiskt',
-  'överhuvudtaget',
-  'huvudsakligen',
-  'huvudsakligt',
-])
+const DICT = {
+  swedish: {
+    adverbs: new Set([
+      'inte', 'mycket', 'så', 'nu', 'där', 'här', 'då', 'hur', 'när',
+      'alltid', 'aldrig', 'ofta', 'snabbt', 'långsamt', 'gärna', 'bara',
+      'nog', 'väl', 'ju', 'också', 'redan', 'fortfarande', 'kanske',
+      'ganska', 'riktigt', 'helt', 'nästan', 'precis', 'särskilt',
+      'speciellt', 'troligen', 'naturligtvis', 'egentligen', 'verkligen',
+      'äntligen', 'förstås', 'dessutom', 'emellertid', 'dock', 'nämligen',
+      'således', 'alltså', 'tillsammans', 'fram', 'tillbaka', 'hem',
+      'bort', 'dit', 'hit', 'upp', 'ner', 'ut', 'in', 'iväg', 'vidare',
+      'fort', 'allt', 'litet', 'lite', 'mindre', 'mer', 'mest', 'minst',
+      'ändå', 'trots', 'sedan', 'sen', 'kvar', 'igen', 'visst',
+      'tyvärr', 'lyckligtvis', 'möjligen', 'möjligtvis', 'knappt',
+      'nätt', 'nära', 'plötsligt', 'genast', 'omedelbart', 'ständigt',
+      'stillasittande', 'försiktigt', 'tyst', 'högt', 'lågt', 'lugnt',
+      'sakta', 'förgäves', 'faktiskt', 'överhuvudtaget', 'huvudsakligen',
+      'huvudsakligt', 'antagligen', 'förmodligen', 'tillfälligt',
+      'fullständigt', 'total', 'totalt', 'ordentligt', 'tydligt',
+      'varsamt', 'häftigt', 'våldsamt', 'envist', 'ilsket', 'trött',
+      'glatt', 'sorgset', 'argt', 'bestämt', 'lätt', 'tungt', 'hårt',
+      'mjukt', 'varmt', 'kallt', 'öppet', 'slutet', 'tydligtvis',
+      'uppenbarligen', 'självklart', 'givetvis', 'onekligen',
+      'oundvikligen', 'förhoppningsvis', 'förvånansvärt', 'märkligt',
+    ]),
+    sPassiveRe: /\b\w+(as|es|os|ås|äs|ös|des|tes|its|ats|ets|uts)\b/i,
+    passiveAux: new Set([
+      'blir', 'blev', 'blivit', 'är', 'var', 'vara', 'vore',
+      'måste', 'skall', 'ska', 'kommer', 'bör', 'kan', 'kunde', 'får', 'må',
+      'hade', 'har', 'haft', 'bliva', 'blevo',
+    ]),
+    pastPartRe: /(ad|at|dd|tt|en|et|na|de|da|te|ts)$/i,
+    positive: new Set([
+      'bra', 'vacker', 'vackert', 'vackra', 'fin', 'fint', 'fina',
+      'god', 'gott', 'goda', 'glad', 'glatt', 'glada', 'lycklig',
+      'lyckligt', 'lyckliga', 'älskar', 'älskade', 'älskat', 'kärlek',
+      'underbar', 'underbart', 'underbara', 'fantastisk', 'fantastiskt',
+      'fantastiska', 'strålande', 'ljus', 'ljust', 'ljusa', 'varm',
+      'varmt', 'varma', 'stark', 'starkt', 'starka', 'fri', 'fritt',
+      'fria', 'frihet', 'hopp', 'hoppfull', 'skön', 'skönt', 'sköna',
+      'lycka', 'glädje', 'leende', 'log', 'ler', 'skratt', 'skrattade',
+      'skrattar', 'tacksam', 'tacksamt', 'nöjd', 'nöjda', 'nöjt',
+      'stolt', 'stolta', 'njuta', 'njöt', 'njuter', 'älska', 'vän',
+      'vänlig', 'trygg', 'tryggt', 'trygga', 'seger', 'vinst', 'framgång',
+      'lyckades', 'lyckas', 'mäster', 'mästerlig', 'blom', 'blomma',
+      'blommar', 'sång', 'sjöng', 'sjunger', 'musik', 'dans', 'fest',
+      'guld', 'silver', 'glitter', 'gläns', 'stråla', 'glans', 'praktfull',
+      'magnifik', 'härlig', 'härligt', 'härliga', 'ljuvlig', 'ljuvligt',
+      'älskvärd', 'älskvärt', 'förtjusande', 'utsökt', 'perfekt',
+      'perfekta', 'idealisk', 'idealiskt', 'beundransvärd', 'imponerande',
+      'behaglig', 'behagligt', 'angenäm', 'angenämt', 'tröstande',
+      'hoppfullt', 'inspirerande', 'glädjande', 'upplyftande',
+      'välsignad', 'välsignat', 'lyckliggjord', 'salig', 'saligt',
+      'harmonisk', 'harmoniskt', 'fridfull', 'fridfullt', 'levande',
+      'blomstrande', 'vital', 'energisk', 'energiskt', 'kraftfull',
+      'kraftfullt', 'mäktig', 'mäktigt', 'storslagen', 'storslaget',
+      'ärofull', 'ärofyllt', 'hedrande',
+    ]),
+    negative: new Set([
+      'dålig', 'dåligt', 'dåliga', 'illa', 'sämre', 'sämst', 'ful',
+      'fult', 'fula', 'mörk', 'mörkt', 'mörka', 'mörker', 'kall',
+      'kallt', 'kalla', 'ensam', 'ensamt', 'ensamma', 'sorg', 'sorglig',
+      'ledsen', 'ledsamt', 'ledsna', 'grät', 'gråter', 'tår', 'tårar',
+      'död', 'dött', 'döda', 'dog', 'dör', 'smärta', 'ont', 'värk',
+      'skada', 'skadad', 'blod', 'blodig', 'sår', 'sårad', 'sårade',
+      'hat', 'hatar', 'hatade', 'ondska', 'ond', 'rädsla', 'rädd',
+      'rädda', 'fruktan', 'fruktade', 'skräck', 'hemsk', 'hemskt',
+      'hemska', 'fasansfull', 'fasansfullt', 'grym', 'grymt', 'grymma',
+      'brutal', 'brutalt', 'hot', 'hota', 'hotade', 'hotar', 'fara',
+      'farlig', 'farligt', 'farliga', 'krig', 'strid', 'slag', 'slåss',
+      'slog', 'slår', 'våld', 'våldsam', 'våldsamt', 'svek', 'sviken',
+      'sviker', 'förräderi', 'förrådd', 'lögn', 'ljög', 'ljuger',
+      'elände', 'misär', 'olycka', 'olycklig', 'katastrof', 'förlust',
+      'förlorade', 'förlorat', 'tom', 'tomt', 'tomma', 'tomhet', 'tung',
+      'tungt', 'tunga', 'hård', 'hårt', 'hårda', 'tystnad', 'tyst',
+      'tysta', 'skrek', 'skriker', 'ropade', 'raseri', 'arg', 'arga',
+      'ilska', 'äcklig', 'äckligt', 'vidrig', 'vidrigt', 'avskyvärd',
+      'avskyvärt', 'motbjudande', 'fruktansvärd', 'fruktansvärt',
+      'outhärdlig', 'outhärdligt', 'plågsam', 'plågsamt', 'smärtsam',
+      'smärtsamt', 'lidande', 'plåga', 'plågad', 'ångest', 'förtvivlan',
+      'förtvivlad', 'hopplös', 'hopplöst', 'meningslös', 'meningslöst',
+      'värdelös', 'värdelöst', 'usel', 'uselt', 'bedrövlig', 'bedrövligt',
+      'sorgesam', 'sorgesamt', 'tragisk', 'tragiskt', 'sorgsen',
+      'sorgset', 'olycksalig', 'olycksaligt', 'dyster', 'dystert',
+      'miserabel', 'miserabelt', 'skrämmande', 'skräckinjagande',
+      'fasaväckande', 'avsky', 'avskydde', 'förakt', 'föraktade',
+      'äckel', 'vämjelse', 'vanära', 'skam', 'skamlig', 'skamligt',
+      'förnedrande', 'kränkande', 'svekfull', 'svekfullt',
+      'bedragen', 'bedraget', 'sviken', 'övergiven', 'övergivet',
+      'ensamt', 'isolerad', 'isolerat',
+    ]),
+    nonName: new Set([
+      'han', 'hon', 'hen', 'den', 'det', 'de', 'dem', 'jag', 'mig',
+      'dig', 'sig', 'vi', 'ni', 'er', 'oss', 'man', 'en', 'ett',
+      'mina', 'dina', 'sina', 'vår', 'våra', 'deras', 'hans', 'hennes',
+      'detta', 'dessa', 'denna', 'därför', 'sedan', 'plötsligt', 'genast',
+      'kanske', 'alltid', 'aldrig', 'ofta', 'ibland', 'redan',
+      'fortfarande', 'ändå', 'trots', 'utan', 'eller', 'men', 'och',
+      'att', 'som', 'när', 'då', 'nu', 'där', 'här', 'hur', 'varför',
+      'vad', 'vem', 'för', 'till', 'från', 'med', 'vid', 'av', 'på',
+      'om', 'under', 'över', 'mellan', 'genom', 'första', 'andra',
+      'tredje', 'sista', 'någon', 'något', 'några', 'ingen', 'inget',
+      'inga', 'alla', 'allt', 'hela', 'många', 'flera', 'varje', 'var',
+      'samma', 'själv', 'bara', 'nog', 'visst', 'ju', 'väl', 'också',
+      'inte', 'mycket', 'litet', 'mer', 'mest', 'du', 'din', 'ditt',
+      'era', 'ert', 'eh', 'ah', 'åh', 'oh', 'äh', 'öh', 'hm', 'mm',
+      'ja', 'nej', 'jo', 'nå', 'tack', 'därefter', 'någonstans',
+      'himlens', 'herre', 'fan', 'jävlar', 'satans', 'någonting',
+      'ingenting', 'allting', 'huruvida', 'hurudant', 'emedan',
+      'likväl', 'därhän', 'varifrån', 'vartill', 'varigenom',
+      'härom', 'därom', 'varom', 'varav', 'varvid', 'därvid',
+      'härvid', 'härifrån', 'därifrån', 'dess', 'dessas',
+      'densamma', 'detsamma', 'desamma', 'varandra',
+      'åtminstone', 'knappast', 'månne', 'icke', 'ej',
+      'framför', 'bakom', 'bredvid', 'innanför', 'utanför',
+      'ovanför', 'nedanför', 'inuti', 'utanpå',
+    ]),
+  },
 
-/** S-passive endings */
-const S_PASSIVE_RE = /\b\w+(as|es|os|ås|äs|ös|des|tes|its|ats|ets|its|uts)\b/i
+  english: {
+    adverbs: new Set([
+      'not', 'very', 'so', 'now', 'then', 'there', 'here', 'how', 'when',
+      'always', 'never', 'often', 'quickly', 'slowly', 'gladly', 'just',
+      'really', 'quite', 'already', 'still', 'maybe', 'perhaps', 'almost',
+      'exactly', 'especially', 'probably', 'naturally', 'actually',
+      'finally', 'therefore', 'however', 'thus', 'together', 'forward',
+      'back', 'home', 'away', 'up', 'down', 'out', 'in', 'off', 'on',
+      'further', 'fast', 'all', 'little', 'less', 'more', 'most', 'least',
+      'yet', 'again', 'perhaps', 'possibly', 'suddenly', 'immediately',
+      'constantly', 'carefully', 'quietly', 'loudly', 'softly', 'calmly',
+      'vainly', 'truly', 'indeed', 'mainly', 'mostly', 'somewhat',
+      'rather', 'too', 'enough', 'once', 'twice', 'ever', 'seldom',
+      'rarely', 'usually', 'certainly', 'clearly', 'simply', 'hardly',
+      'barely', 'scarcely', 'merely', 'nearly', 'deeply', 'fully',
+      'greatly', 'highly', 'strongly', 'surely', 'absolutely', 'entirely',
+      'completely', 'totally', 'partially', 'partly', 'wholly',
+      'thoroughly', 'utterly', 'extremely', 'immensely', 'terribly',
+      'awfully', 'incredibly', 'remarkably', 'surprisingly', 'strangely',
+      'oddly', 'curiously', 'fortunately', 'unfortunately', 'luckily',
+      'unluckily', 'obviously', 'apparently', 'evidently', 'seemingly',
+      'presumably', 'undoubtedly', 'doubtless', 'definitely', 'surely',
+      'certainly', 'plainly', 'visibly', 'noticeably', 'considerably',
+      'significantly', 'slightly', 'barely', 'hardly', 'scarcely',
+      'readily', 'willingly', 'eagerly', 'hesitantly', 'reluctantly',
+      'patiently', 'anxiously', 'nervously', 'frantically', 'wildly',
+      'fiercely', 'violently', 'savagely', 'brutally', 'tenderly',
+      'gently', 'firmly', 'sternly', 'harshly', 'coldly', 'warmly',
+      'politely', 'rudely', 'kindly', 'cruelly', 'honestly', 'truthfully',
+      'falsely', 'wrongly', 'rightly', 'justly', 'fairly', 'unfairly',
+    ]),
+    sPassiveRe: null,
+    passiveAux: new Set([
+      'is', 'am', 'are', 'was', 'were', 'be', 'been', 'being',
+      'get', 'gets', 'got', 'gotten', 'become', 'became',
+      'has', 'have', 'had', 'having',
+    ]),
+    pastPartRe: /(ed|en|wn|pt|nt|lt|st|ft|kt|un|wn|t|ed)[.,;:!?]?$/i,
+    positive: new Set([
+      'good', 'beautiful', 'nice', 'fine', 'great', 'happy', 'joy',
+      'joyful', 'love', 'loved', 'loving', 'wonderful', 'fantastic',
+      'brilliant', 'radiant', 'light', 'bright', 'warm', 'strong',
+      'free', 'freedom', 'hope', 'hopeful', 'lovely', 'joy', 'smile',
+      'smiled', 'laugh', 'laughed', 'grateful', 'satisfied', 'proud',
+      'enjoy', 'enjoyed', 'friend', 'friendly', 'safe', 'victory',
+      'success', 'succeeded', 'master', 'masterful', 'bloom', 'blossom',
+      'song', 'sang', 'sing', 'music', 'dance', 'party', 'gold',
+      'silver', 'glitter', 'shine', 'glorious', 'magnificent',
+      'delight', 'delightful', 'charming', 'gorgeous', 'splendid',
+      'superb', 'excellent', 'kind', 'gentle', 'sweet', 'tender',
+      'bless', 'blessed', 'grace', 'peace', 'peaceful', 'serene',
+      'adore', 'adored', 'cherish', 'cherished', 'treasure', 'precious',
+      'darling', 'beloved', 'divine', 'heavenly', 'sublime', 'exquisite',
+      'elegant', 'graceful', 'noble', 'valiant', 'heroic', 'courageous',
+      'bold', 'brave', 'daring', 'gallant', 'triumph', 'triumphant',
+      'cheerful', 'jolly', 'merry', 'elated', 'ecstatic', 'thrilled',
+      'overjoyed', 'jubilant', 'exultant', 'glowing', 'luminous',
+      'shining', 'sparkling', 'dazzling', 'brilliant', 'vivid',
+      'vibrant', 'fresh', 'flourishing', 'thriving', 'prosperous',
+      'rich', 'abundant', 'plentiful', 'bountiful', 'generous',
+      'compassionate', 'merciful', 'forgiving', 'gracious',
+      'faith', 'faithful', 'loyal', 'devoted', 'steadfast',
+      'honest', 'honorable', 'righteous', 'virtuous', 'pure',
+      'innocent', 'gentle', 'meek', 'humble', 'modest',
+    ]),
+    negative: new Set([
+      'bad', 'worse', 'worst', 'ugly', 'dark', 'darkness', 'cold',
+      'alone', 'lonely', 'sorrow', 'sad', 'cried', 'cry', 'tears',
+      'tear', 'dead', 'death', 'died', 'die', 'dying', 'pain', 'hurt',
+      'ache', 'wound', 'wounded', 'blood', 'bloody', 'hatred', 'hate',
+      'hated', 'evil', 'fear', 'afraid', 'terror', 'horrible', 'terrible',
+      'dreadful', 'cruel', 'brutal', 'threat', 'threaten', 'danger',
+      'dangerous', 'war', 'battle', 'fight', 'fought', 'violence',
+      'violent', 'betray', 'betrayed', 'lie', 'lied', 'misery', 'tragedy',
+      'loss', 'lost', 'empty', 'emptiness', 'heavy', 'hard', 'silence',
+      'silent', 'scream', 'screamed', 'rage', 'angry', 'anger', 'suffer',
+      'suffering', 'despair', 'ruin', 'ruined', 'corpse', 'poison',
+      'monster', 'demon', 'ghost', 'curse', 'cursed', 'disgusting',
+      'vile', 'foul', 'repulsive', 'revolting', 'horrific', 'hideous',
+      'grotesque', 'monstrous', 'fiendish', 'diabolical', 'wicked',
+      'sinister', 'malicious', 'malevolent', 'vicious', 'savage',
+      'merciless', 'ruthless', 'pitiless', 'heartless', 'coldhearted',
+      'dismal', 'gloomy', 'bleak', 'grim', 'dreary', 'desolate',
+      'barren', 'wretched', 'miserable', 'pathetic', 'pitiful',
+      'hopeless', 'helpless', 'powerless', 'weak', 'feeble', 'frail',
+      'sick', 'sickly', 'diseased', 'rotting', 'decaying', 'festering',
+      'corrupt', 'corrupted', 'tainted', 'polluted', 'defiled',
+      'shame', 'shameful', 'disgrace', 'disgraceful', 'dishonor',
+      'humiliation', 'humiliated', 'degraded', 'broken', 'shattered',
+      'crushed', 'destroyed', 'devastated', 'ravaged', 'scorched',
+      'burnt', 'burning', 'choking', 'drowning', 'suffocating',
+      'mourn', 'mourning', 'grief', 'grieving', 'weeping', 'sobbing',
+      'wailing', 'lament', 'lamenting', 'anguish', 'torment',
+      'tortured', 'agonized', 'agonizing',
+    ]),
+    nonName: new Set([
+      'he', 'she', 'it', 'they', 'them', 'i', 'me', 'you', 'we', 'us',
+      'my', 'your', 'his', 'her', 'our', 'their', 'its', 'this', 'that',
+      'these', 'those', 'therefore', 'then', 'suddenly', 'immediately',
+      'maybe', 'always', 'never', 'often', 'sometimes', 'already',
+      'still', 'yet', 'without', 'or', 'but', 'and', 'as', 'when',
+      'now', 'there', 'here', 'how', 'why', 'what', 'who', 'for', 'to',
+      'from', 'with', 'by', 'of', 'on', 'about', 'under', 'over',
+      'between', 'through', 'first', 'second', 'third', 'last', 'some',
+      'any', 'no', 'none', 'all', 'every', 'each', 'many', 'several',
+      'same', 'self', 'just', 'very', 'also', 'not', 'much', 'little',
+      'more', 'most', 'a', 'an', 'the', 'oh', 'ah', 'um', 'uh', 'yes',
+      'no', 'well', 'thanks', 'after', 'somewhere', 'heaven', 'lord',
+      'hell', 'damn', 'bloody', 'thereupon', 'whereupon', 'thereafter',
+      'meanwhile', 'nonetheless', 'nevertheless', 'although', 'though',
+      'unless', 'until', 'while', 'whilst', 'because', 'since', 'before',
+      'after', 'above', 'below', 'beneath', 'beside', 'besides',
+      'beyond', 'during', 'among', 'amongst', 'toward', 'towards',
+      'onto', 'into', 'upon', 'within', 'without', 'except', 'besides',
+      'despite', 'notwithstanding', 'regarding', 'concerning',
+      'another', 'other', 'others', 'such', 'whatever', 'whichever',
+      'whoever', 'whomever', 'whose', 'whom', 'anyone', 'anybody',
+      'anything', 'someone', 'somebody', 'something', 'everyone',
+      'everybody', 'everything', 'nobody', 'noone', 'nothing',
+      'anywhere', 'everywhere', 'nowhere', 'rather', 'quite',
+      'somehow', 'anyhow', 'anyway', 'else', 'otherwise',
+    ]),
+  },
+}
 
-/** Periphrastic passive auxiliaries */
-const PASSIVE_AUX = new Set([
-  'blir',
-  'blev',
-  'blivit',
-  'är',
-  'var',
-  'vara',
-  'vore',
-  'måste',
-  'skall',
-  'ska',
-  'kommer',
-  'bör',
-  'kan',
-  'kunde',
-  'får',
-  'må',
-])
+// ── Language detection ──
 
-/** Past participle endings (common) */
-const PAST_PART_RE = /(ad|at|dd|tt|en|et|na|de|da|te|ts)$/i
+const SW_MARKERS = ['och','att','det','en','som','är','jag','han','hon','inte','med','för','till','den','ett','har','var','men','om','de','på','av','sig','skulle','eller','än','efter','är','när','då','vad','hur']
+const EN_MARKERS = ['the','and','that','was','for','are','with','his','they','this','have','from','had','not','but','you','all','were','when','there','their','been','would','could','should','will','can','its','than','or']
 
-/** Positive sentiment words (Swedish) */
-const POSITIVE_WORDS = new Set([
-  'bra',
-  'vacker',
-  'vackert',
-  'vackra',
-  'fin',
-  'fint',
-  'fina',
-  'god',
-  'gott',
-  'goda',
-  'glad',
-  'glatt',
-  'glada',
-  'lycklig',
-  'lyckligt',
-  'lyckliga',
-  'älskar',
-  'älskade',
-  'älskat',
-  'kärlek',
-  'underbar',
-  'underbart',
-  'underbara',
-  'fantastisk',
-  'fantastiskt',
-  'fantastiska',
-  'strålande',
-  'ljus',
-  'ljust',
-  'ljusa',
-  'varm',
-  'varmt',
-  'varma',
-  'stark',
-  'starkt',
-  'starka',
-  'fri',
-  'fritt',
-  'fria',
-  'frihet',
-  'hopp',
-  'hoppfull',
-  'skön',
-  'skönt',
-  'sköna',
-  'lycka',
-  'glädje',
-  'leende',
-  'log',
-  'ler',
-  'skratt',
-  'skrattade',
-  'skrattar',
-  'tacksam',
-  'tacksamt',
-  'nöjd',
-  'nöjda',
-  'nöjt',
-  'stolt',
-  'stolta',
-  'stolt',
-  'njuta',
-  'njöt',
-  'njuter',
-  'älska',
-  'vän',
-  'vänlig',
-  'trygg',
-  'tryggt',
-  'trygga',
-  'seger',
-  'vinst',
-  'framgång',
-  'lyckades',
-  'lyckas',
-  'mäster',
-  'mästerlig',
-  'blom',
-  'blomma',
-  'blommar',
-  'sång',
-  'sjöng',
-  'sjunger',
-  'musik',
-  'dans',
-  'fest',
-  'guld',
-  'silver',
-  'glitter',
-  'gläns',
-  'stråla',
-  'glans',
-  'praktfull',
-  'magnifik',
-])
+export function detectLanguage(text) {
+  const words = text.toLowerCase().split(/\s+/).filter(Boolean)
+  if (words.length < 20) return /[åäöÅÄÖ]/.test(text) ? 'swedish' : 'english'
 
-/** Negative sentiment words (Swedish) */
-const NEGATIVE_WORDS = new Set([
-  'dålig',
-  'dåligt',
-  'dåliga',
-  'illa',
-  'sämre',
-  'sämst',
-  'ful',
-  'fult',
-  'fula',
-  'mörk',
-  'mörkt',
-  'mörka',
-  'mörker',
-  'kall',
-  'kallt',
-  'kalla',
-  'ensam',
-  'ensamt',
-  'ensamma',
-  'sorg',
-  'sorglig',
-  'ledsen',
-  'ledsamt',
-  'ledsna',
-  'grät',
-  'gråter',
-  'tår',
-  'tårar',
-  'död',
-  'dött',
-  'döda',
-  'dog',
-  'dör',
-  'smärta',
-  'ont',
-  'värk',
-  'skada',
-  'skadad',
-  'blod',
-  'blodig',
-  'sår',
-  'sårad',
-  'sårade',
-  'hat',
-  'hatar',
-  'hatade',
-  'ondska',
-  'ond',
-  'rädsla',
-  'rädd',
-  'rädda',
-  'fruktan',
-  'fruktade',
-  'skräck',
-  'hemsk',
-  'hemskt',
-  'hemska',
-  'fasansfull',
-  'fasansfullt',
-  'grym',
-  'grymt',
-  'grymma',
-  'brutal',
-  'brutalt',
-  'hot',
-  'hota',
-  'hotade',
-  'hotar',
-  'fara',
-  'farlig',
-  'farligt',
-  'farliga',
-  'krig',
-  'strid',
-  'slag',
-  'slåss',
-  'slog',
-  'slår',
-  'våld',
-  'våldsam',
-  'våldsamt',
-  'svek',
-  'sviken',
-  'sviker',
-  'förräderi',
-  'förrådd',
-  'lögn',
-  'ljög',
-  'ljuger',
-  'elände',
-  'misär',
-  'olycka',
-  'olycklig',
-  'katastrof',
-  'förlust',
-  'förlorade',
-  'förlorat',
-  'tom',
-  'tomt',
-  'tomma',
-  'tomhet',
-  'tung',
-  'tungt',
-  'tunga',
-  'hård',
-  'hårt',
-  'hårda',
-  'tystnad',
-  'tyst',
-  'tysta',
-  'skrek',
-  'skriker',
-  'ropade',
-  'raseri',
-  'arg',
-  'arga',
-  'ilska',
-])
+  let sw = 0
+  let en = 0
+  for (const w of words) {
+    if (SW_MARKERS.includes(w)) sw++
+    if (EN_MARKERS.includes(w)) en++
+  }
+
+  if (sw > en * 1.5) return 'swedish'
+  if (en > sw * 1.5) return 'english'
+  return /[åäöÅÄÖ]/.test(text) ? 'swedish' : 'english'
+}
 
 // ── Clean text ──
 
@@ -375,7 +290,8 @@ function getWords(text) {
 function getSentences(text) {
   const cleaned = stripMarkdown(text)
   if (!cleaned) return []
-  return cleaned.split(/[.!?]+[\s\n]+(?=[A-ZÅÄÖ0-9])/g).filter((s) => s.trim().length > 0)
+  const splitter = /[.!?]+[\s\n]+(?=[A-ZÅÄÖÉ0-9])/g
+  return cleaned.split(splitter).filter((s) => s.trim().length > 0)
 }
 
 // ── Readability ──
@@ -398,12 +314,8 @@ export function calcLix(wordCount, sentenceCount, longWordCount) {
   return Math.round((wordCount / sentenceCount + (longWordCount * 100) / wordCount) * 10) / 10
 }
 
-/** Flesch reading ease adapted for Swedish (Flesch-Kincaid with Swedish syllable approx) */
 export function calcFleschSwedish(wordCount, sentenceCount, longWordCount) {
   if (sentenceCount === 0 || wordCount === 0) return 0
-  // Approximate: use long words as proxy for complex words
-  // Standard: 206.835 − 1.015(words/sentences) − 84.6(syllables/words)
-  // Simplified: 206.835 − 1.015 * wps − 84.6 * (longWords/words)
   const ease = 206.835 - 1.015 * (wordCount / sentenceCount) - 84.6 * (longWordCount / wordCount)
   return Math.round(Math.max(0, Math.min(100, ease)))
 }
@@ -428,7 +340,6 @@ export function countParagraphs(text) {
     .filter((p) => p.trim().length > 0).length
 }
 
-/** Sentence length variance (standard deviation) */
 export function calcSentenceLengthStdDev(text) {
   const sentences = getSentences(text)
   if (sentences.length < 2) return 0
@@ -440,23 +351,20 @@ export function calcSentenceLengthStdDev(text) {
 
 // ── Passive voice ──
 
-export function countPassiveVerbs(text) {
+export function countPassiveVerbs(text, lang = 'swedish') {
+  const d = DICT[lang] || DICT.swedish
   const words = getWords(stripMarkdown(text))
   let count = 0
 
   for (let i = 0; i < words.length; i++) {
     const w = words[i]
-
-    // S-passive: "skrivs", "görs", "byggdes", "sägs"
-    if (S_PASSIVE_RE.test(w)) {
+    if (d.sPassiveRe && d.sPassiveRe.test(w)) {
       count++
       continue
     }
-
-    // Periphrastic: "blir skriven", "är gjord", "blev tagen"
-    if (PASSIVE_AUX.has(w.toLowerCase()) && i + 1 < words.length) {
+    if (d.passiveAux.has(w.toLowerCase()) && i + 1 < words.length) {
       const next = words[i + 1]
-      if (PAST_PART_RE.test(next)) {
+      if (d.pastPartRe.test(next)) {
         count++
       }
     }
@@ -467,25 +375,27 @@ export function countPassiveVerbs(text) {
 
 export function calcPassiveRatio(passiveCount, wordCount) {
   if (!wordCount) return 0
-  return Math.round((passiveCount / wordCount) * 1000) / 10 // per 1000 words
+  return Math.round((passiveCount / wordCount) * 1000) / 10
 }
 
 // ── Adverb ratio ──
 
-export function countAdverbs(text) {
+export function countAdverbs(text, lang = 'swedish') {
+  const d = DICT[lang] || DICT.swedish
   const words = getWords(stripMarkdown(text))
   let count = 0
   for (const w of words) {
     const lower = w.toLowerCase()
-    if (SWEDISH_ADVERBS.has(lower)) {
+    if (d.adverbs.has(lower)) {
       count++
-    } else if (lower.endsWith('vis') || lower.endsWith('ligen') || lower.endsWith('tvis')) {
-      // "lyckligtvis", "naturligtvis", "egentligen", "möjligen"
-      count++
-    } else if (/^\w+[a-zåäö]t$/i.test(lower) && !lower.endsWith('et') && !lower.endsWith('at')) {
-      // Neutral adjective form used adverbially: "snabbt", "långsamt", "vackert"
-      // Exclude common non-adverb -t words: det, et, at, etc
-      if (lower.length > 3) count++
+    } else if (lang === 'swedish') {
+      if (lower.endsWith('vis') || lower.endsWith('ligen') || lower.endsWith('tvis')) {
+        count++
+      } else if (/^\w+[a-zåäö]t$/i.test(lower) && !lower.endsWith('et') && !lower.endsWith('at') && lower.length > 3) {
+        count++
+      }
+    } else {
+      if (lower.endsWith('ly') && lower.length > 4) count++
     }
   }
   return count
@@ -493,24 +403,17 @@ export function countAdverbs(text) {
 
 export function calcAdverbRatio(adverbCount, wordCount) {
   if (!wordCount) return 0
-  return Math.round((adverbCount / wordCount) * 1000) / 10 // per 1000 words (King rule: avoid adverbs)
+  return Math.round((adverbCount / wordCount) * 1000) / 10
 }
 
 // ── Vocabulary richness ──
 
-/**
- * Type-Token Ratio: unique words / total words.
- * High = rich vocabulary, but sensitive to text length.
- */
 export function calcTTR(words) {
   if (!words.length) return 0
   const unique = new Set(words.map((w) => w.toLowerCase()))
   return Math.round((unique.size / words.length) * 1000) / 10
 }
 
-/**
- * Hapax legomena: words used exactly once.
- */
 export function countHapaxLegomena(words) {
   const freq = new Map()
   for (const w of words) {
@@ -524,23 +427,15 @@ export function countHapaxLegomena(words) {
   return count
 }
 
-/**
- * Honoré's R: lexical density measure, robust to text length.
- * R = 100 * log(N) / (1 - V1/V)  where N=total words, V=unique, V1=hapax
- */
 export function calcHonoreR(wordCount, uniqueCount, hapaxCount) {
   if (wordCount === 0 || uniqueCount === 0) return 0
-  if (hapaxCount === uniqueCount) return 0 // avoid division by zero
+  if (hapaxCount === uniqueCount) return 0
   const r = (100 * Math.log(wordCount)) / (1 - hapaxCount / uniqueCount)
   return Math.round(r * 10) / 10
 }
 
 // ── Word frequency ──
 
-/**
- * Top-N word frequency as percentage of total words.
- * Low = varied vocabulary, high = repetitive.
- */
 export function calcTopWordFrequency(words, topN = 100) {
   if (!words.length) return 0
   const freq = new Map()
@@ -555,170 +450,30 @@ export function calcTopWordFrequency(words, topN = 100) {
 
 // ── Sentiment ──
 
-export function calcSentiment(text) {
+export function calcSentiment(text, lang = 'swedish') {
+  const d = DICT[lang] || DICT.swedish
   const words = getWords(stripMarkdown(text))
   let positive = 0
   let negative = 0
 
   for (const w of words) {
     const lower = w.toLowerCase()
-    if (POSITIVE_WORDS.has(lower)) positive++
-    if (NEGATIVE_WORDS.has(lower)) negative++
+    if (d.positive.has(lower)) positive++
+    if (d.negative.has(lower)) negative++
   }
 
   const total = positive + negative
-  const polarity = total > 0 ? Math.round(((positive - negative) / total) * 100) : 0 // -100 to 100
-  const density = words.length > 0 ? Math.round((total / words.length) * 1000) / 10 : 0 // per 1000 words
+  const polarity = total > 0 ? Math.round(((positive - negative) / total) * 100) : 0
+  const density = words.length > 0 ? Math.round((total / words.length) * 1000) / 10 : 0
 
   return { positive, negative, polarity, density }
 }
 
-// ── Entity extraction (smart character detection) ──
+// ── Entity extraction ──
 
-/** Words that start sentences but aren't character names */
-const NON_NAME_WORDS = new Set([
-  'han',
-  'hon',
-  'hen',
-  'den',
-  'det',
-  'de',
-  'dem',
-  'jag',
-  'mig',
-  'dig',
-  'sig',
-  'vi',
-  'ni',
-  'er',
-  'oss',
-  'man',
-  'en',
-  'ett',
-  'mina',
-  'dina',
-  'sina',
-  'vår',
-  'våra',
-  'deras',
-  'hans',
-  'hennes',
-  'detta',
-  'dessa',
-  'denna',
-  'därför',
-  'sedan',
-  'plötsligt',
-  'genast',
-  'kanske',
-  'alltid',
-  'aldrig',
-  'ofta',
-  'ibland',
-  'redan',
-  'fortfarande',
-  'ändå',
-  'trots',
-  'utan',
-  'eller',
-  'men',
-  'och',
-  'att',
-  'som',
-  'när',
-  'då',
-  'nu',
-  'där',
-  'här',
-  'hur',
-  'varför',
-  'vad',
-  'vem',
-  'för',
-  'till',
-  'från',
-  'med',
-  'vid',
-  'av',
-  'på',
-  'om',
-  'under',
-  'över',
-  'mellan',
-  'genom',
-  'första',
-  'andra',
-  'tredje',
-  'sista',
-  'någon',
-  'något',
-  'några',
-  'ingen',
-  'inget',
-  'inga',
-  'alla',
-  'allt',
-  'hela',
-  'många',
-  'flera',
-  'några',
-  'varje',
-  'var',
-  'samma',
-  'själv',
-  'bara',
-  'nog',
-  'visst',
-  'ju',
-  'väl',
-  'också',
-  'inte',
-  'mycket',
-  'litet',
-  'mer',
-  'mest',
-  'du',
-  'din',
-  'ditt',
-  'era',
-  'ert',
-  'ni',
-  'dig',
-  'han',
-  'hon',
-  'den',
-  'det',
-  'de',
-  'dem',
-  'eh',
-  'ah',
-  'åh',
-  'oh',
-  'äh',
-  'öh',
-  'hm',
-  'mm',
-  'ja',
-  'nej',
-  'jo',
-  'nå',
-  'tack',
-  'därefter',
-  'någonstans',
-  'himlens',
-  'herre',
-  'fan',
-  'jävlar',
-  'satans',
-])
-
-/**
- * Extract potential character names from text.
- * Finds capitalized word sequences (1-3 words), filters out common non-name words.
- */
-export function extractEntities(text) {
+export function extractEntities(text, lang = 'swedish') {
+  const d = DICT[lang] || DICT.swedish
   const cleaned = stripMarkdown(text)
-  // Find all capitalized sequences: 1-3 capitalized words in a row
   const capitalizedRe = /\b([A-ZÅÄÖÉ][a-zåäöé]+(?:\s+[A-ZÅÄÖÉ][a-zåäöé]+){0,2})\b/g
   const candidates = new Map()
   let match
@@ -726,36 +481,18 @@ export function extractEntities(text) {
   while ((match = capitalizedRe.exec(cleaned)) !== null) {
     const entity = match[1]
     const firstWord = entity.split(/\s+/)[0].toLowerCase()
-    // Skip single-word non-names
-    if (!entity.includes(' ') && NON_NAME_WORDS.has(firstWord)) continue
-    // Skip very short
+    if (!entity.includes(' ') && d.nonName.has(firstWord)) continue
     if (entity.length < 2) continue
     candidates.set(entity, (candidates.get(entity) || 0) + 1)
   }
   return Object.fromEntries(candidates)
 }
 
-// ── Character mentions (legacy wiki link) ──
-
-export function countCharacterMentions(text) {
-  /** @type {Map<string, number>} */
-  const mentions = new Map()
-  const regex = /\[\[([^\]|]+)(?:\|[^\]]+)?\]\]/g
-  let match
-  // biome-ignore lint/suspicious/noAssignInExpressions: regex exec pattern
-  while ((match = regex.exec(text)) !== null) {
-    const name = match[1].trim()
-    mentions.set(name, (mentions.get(name) || 0) + 1)
-  }
-  return Object.fromEntries(mentions)
-}
-
 // ── Combined analysis ──
 
-/**
- * Run all text stats on a markdown string
- */
-export function analyzeText(text) {
+export function analyzeText(text, lang) {
+  if (!lang) lang = detectLanguage(text)
+
   const cleaned = stripMarkdown(text)
   const words = getWords(cleaned)
   const wordCount = words.length
@@ -764,9 +501,9 @@ export function analyzeText(text) {
   const dialogueLines = countDialogueLines(text)
   const contentLines = countContentLines(text)
   const paragraphCount = countParagraphs(text)
-  const entities = extractEntities(text)
-  const passiveCount = countPassiveVerbs(text)
-  const adverbCount = countAdverbs(text)
+  const entities = extractEntities(text, lang)
+  const passiveCount = countPassiveVerbs(text, lang)
+  const adverbCount = countAdverbs(text, lang)
   const hapaxCount = countHapaxLegomena(words)
 
   const lix = calcLix(wordCount, sentenceCount, longWordCount)
@@ -784,7 +521,7 @@ export function analyzeText(text) {
     hapaxCount,
   )
   const topWordFreq = calcTopWordFrequency(words, 100)
-  const sentiment = calcSentiment(text)
+  const sentiment = calcSentiment(text, lang)
 
   return {
     wordCount,
